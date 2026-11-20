@@ -99,7 +99,7 @@
     }
     .badge { display: inline-block; padding: 3px 5px 2px; border-radius: 3px; margin-right: 4px; color: #000; box-shadow: 0 2px 0 rgba(0,0,0,0.5); }
     kbd { font-family: inherit; font-size: 7px; background: #273042; border: 1px solid #4b5a75; border-bottom-width: 2px; border-radius: 3px; padding: 1px 3px; color: #fff; }
-    #dev-panel { position: absolute; right: 8px; top: 186px; width: 262px; max-height: calc(100% - 270px); overflow-y: auto; z-index: 12; pointer-events: auto;
+    #dev-panel { position: absolute; right: 8px; top: 232px; width: 262px; max-height: calc(100% - 310px); overflow-y: auto; z-index: 12; pointer-events: auto;
       background: rgba(6,10,18,0.93); border: 2px solid #22d3ee; border-radius: 4px; padding: 8px; font-family: 'Press Start 2P', monospace; font-size: 7px; color: #e2e8f0; box-shadow: 4px 4px 0 #000; }
     #dev-panel .dev-title { color: #67e8f9; font-size: 10px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
     #dev-panel .dev-title span { font-size: 6px; color: #64748b; }
@@ -115,7 +115,10 @@
     #dev-panel .dev-x { font: inherit; font-size: 6px; background: #7f1d1d; color: #fff; border: 0; padding: 3px 5px; cursor: pointer; }
     #dev-panel .dev-dim { color: #64748b; line-height: 1.8; }
     #dev-info { color: #a5f3fc !important; }
-    #dev-tag { position: absolute; right: 8px; top: 186px; z-index: 12; font-family: 'Press Start 2P', monospace; font-size: 7px; color: #67e8f9; background: rgba(6,10,18,0.85); border: 1px solid #22d3ee; padding: 6px 8px; pointer-events: none; }
+    #dev-panel .dev-sl { display: block; margin: 5px 0; color: #cbd5e1; font-size: 6px; }
+    #dev-panel .dev-sl span { display: flex; justify-content: space-between; margin-bottom: 3px; } #dev-panel .dev-sl b { color: #facc15; }
+    #dev-panel .dev-sl input { width: 100%; accent-color: #22d3ee; height: 12px; }
+    #dev-tag { position: absolute; right: 8px; top: 232px; z-index: 12; font-family: 'Press Start 2P', monospace; font-size: 7px; color: #67e8f9; background: rgba(6,10,18,0.85); border: 1px solid #22d3ee; padding: 6px 8px; pointer-events: none; }
     .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
     .mode-card {
       font-family: inherit; text-align: left; cursor: pointer; color: #cbd5e1; background: #0f141e;
@@ -440,7 +443,7 @@
       horn() { this.tone(440, 0.11, 'square', 0.11, 430); this.tone(554.37, 0.11, 'square', 0.09, 540); this.tone(440, 0.15, 'square', 0.11, 425, 0.15); this.tone(554.37, 0.15, 'square', 0.09, 535, 0.15); }
       botHonk(p = 1) { this.tone(620 * p, 0.09, 'square', 0.04); this.tone(620 * p, 0.09, 'square', 0.04, null, 0.12); }
       backupBeep() { this.tone(1250, 0.09, 'square', 0.02); }
-      pickup(n) { this.tone(180, 0.14, 'sawtooth', 0.07, 360); for (let i = 0; i < 2 + n; i++) this.tone([523.25, 659.25, 783.99, 1046.5, 1318.5][i], 0.08, 'square', 0.1, null, 0.05 + i * 0.07); }
+      pickup(n) { this.tone(180, 0.14, 'sawtooth', 0.07, 360); for (let i = 0; i < Math.min(5, 2 + n); i++) this.tone([523.25, 659.25, 783.99, 1046.5, 1318.5][i], 0.08, 'square', 0.1, null, 0.05 + i * 0.07); }
       delivery(express) {
         [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5].forEach((n, i) => this.tone(n, i === 5 ? 0.22 : 0.07, 'square', 0.09, null, [0, 0.07, 0.14, 0.21, 0.31, 0.39][i]));
         if (express) this.tone(1567.98, 0.25, 'triangle', 0.08, null, 0.48);
@@ -648,7 +651,7 @@
       { id: 'motor', branch: 'ENGINE', name: 'HIGH-TORQUE MOTOR', max: 5, cost: [1400, 2000, 2800, 3800, 5200], req: { speed: 5 }, desc: '+7% top speed per level, on top of TOP SPEED.' },
       { id: 'battery', branch: 'ENGINE', name: 'LITHIUM BATTERY', max: 3, cost: [1100, 1900, 3000], req: { accel: 4 }, desc: '+14% acceleration and faster turbo recharge.' },
       { id: 'handling', branch: 'HANDLING', name: 'STEERING', max: 4, cost: [100, 230, 420, 680], desc: '+11% turn rate & tyre grip.' },
-      { id: 'brakes', branch: 'HANDLING', name: 'BRAKES', max: 3, cost: [80, 180, 330], desc: 'Stop and reverse much faster. Great for STOP lines.' },
+      { id: 'brakes', branch: 'HANDLING', name: 'BRAKES', max: 3, cost: [80, 180, 330], desc: 'Stock brakes are mushy and the truck rolls forever. Bite harder, coast less. Great for STOP lines.' },
       { id: 'drift', branch: 'HANDLING', name: 'DRIFT', skill: true, max: 1, cost: [320], req: { handling: 1 }, desc: 'Hold SPACE while turning to drift. Drifts pay a bonus.' },
       { id: 'driftboost', branch: 'HANDLING', name: 'DRIFT BOOST', max: 2, cost: [420, 850], req: { drift: 1 }, desc: 'Release a long drift for a speed kick.' },
       { id: 'tyres', branch: 'HANDLING', name: 'RACING TYRES', max: 3, cost: [900, 1600, 2500], req: { handling: 4 }, desc: 'Sharper turns and more grip: corner at full speed.' },
@@ -672,17 +675,18 @@
     const persist = () => { if (!DEV.on) storage.set('forkliftRush.ps1', JSON.stringify(save)); };   // dev mode never touches your save
     const lvl = id => (DEV.on && DEV.maxUp ? UPG[id].max : save.up[id] || 0);
     function stats() {
-      return {
+      return applyBuffMods({
         maxF: 205 * (1 + 0.09 * lvl('speed')) * (1 + 0.07 * lvl('motor')), accel: 430 * (1 + 0.16 * lvl('accel')) * (1 + 0.14 * lvl('battery')),
         turn: 3.2 * (1 + 0.11 * lvl('handling')) * (1 + 0.1 * lvl('tyres')), grip: 14 * (1 + 0.1 * lvl('handling')) * (1 + 0.15 * lvl('tyres')),
         turboMult: 1.45 + 0.15 * lvl('nitro'), dockRange: 1 + 0.35 * lvl('autodock'), gps: lvl('gps') > 0,
-        brake: 820 * (1 + 0.3 * lvl('brakes')), rev: 140 * (1 + 0.1 * lvl('brakes')),
+        brake: 540 * (1 + 0.62 * lvl('brakes')), rev: 140 * (1 + 0.1 * lvl('brakes')),
         turbo: lvl('turbo') > 0, tankDrain: 38 / (1 + 0.35 * lvl('tank')), tankRegen: 16 * (1 + 0.35 * lvl('tank')) * (1 + 0.2 * lvl('battery')),
         drift: lvl('drift') > 0, driftBoost: lvl('driftboost'), capacity: 1 + lvl('forks'),
         maxHP: 100 + 25 * lvl('armor'), dmgMul: 1 - 0.25 * lvl('bumper'),
         hornR: 230 * (1 + 0.35 * lvl('horn')), hornYield: 1.4 + lvl('horn') * 0.9,
-        overtime: 2 * lvl('overtime'), payMul: 1 + 0.15 * lvl('bonus')
-      };
+        overtime: 2 * lvl('overtime'), payMul: 1 + 0.15 * lvl('bonus'),
+        roll: 190 * (1 + 0.33 * lvl('brakes'))          // coast-down drag: stock trucks roll a long way
+      });
     }
     let S = stats();
 
@@ -1011,6 +1015,7 @@
         g.fillStyle = 'rgba(210, 160, 40, 0.95)'; g.beginPath(); g.ellipse(22, 19, 13, 6, 0.3, 0, Math.PI * 2); g.fill(); g.beginPath(); g.ellipse(44, 11, 11, 5, -0.4, 0, Math.PI * 2); g.fill();
         g.fillStyle = 'rgba(255,240,200,0.9)'; g.fillRect(20, 16, 3, 1); g.fillRect(42, 9, 3, 1);
       });
+      TEX.beam = canvasTex(8, 64, g => { const gr = g.createLinearGradient(0, 64, 0, 0); gr.addColorStop(0, 'rgba(255,255,255,0.95)'); gr.addColorStop(0.35, 'rgba(255,255,255,0.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 8, 64); g.fillStyle = 'rgba(255,255,255,0.5)'; g.fillRect(3, 0, 2, 64); });
       TEX.prod = PRODUCTS.map((p, i) => canvasTex(128, 64, g => paintProduct(p.id, g, mulberry32(101 + i))));
       TEX.spills = SPILL_KINDS.map((k, i) => canvasTex(96, 48, (g, w, h) => paintSpill(k, g, mulberry32(303 + i), w, h)));
       TEX.rack = canvasTex(32, 32, g => {
@@ -1179,6 +1184,41 @@
       GEO.plane = new GB().quad([-0.5, 0, 0.5], [0.5, 0, 0.5], [0.5, 0, -0.5], [-0.5, 0, -0.5], [0, 1, 0], [1, 1, 1]).build();
       GEO.hlBox = new GB().box(0, 0, 0, 1, 1, 1, 0xffffff).build();
       GEO.smallBox = new GB().box(0, 0, 0, 10, 8, 10, 0xffffff, { uv: [0.02, 0.6, 0.18, 0.78], uvTop: [0.6, 0.6, 0.76, 0.78] }).build();
+      // powerup pickups (centred, sitting on y = 0)
+      const pu = f => { const g = new GB(); f(g); return g.build(); };
+      GEO.pu = {
+        energy: pu(g => { g.box(0, 0, 0, 7, 13, 7, 0x15803d); g.box(0, 3.5, 0, 7.3, 4, 7.3, 0x111827); g.box(0, 8.5, 0, 7.4, 1.6, 7.4, 0x84cc16); g.box(0, 13, 0, 6, 1, 6, 0xcbd5e1); }),
+        coffee: pu(g => { g.box(0, 0, 0, 8, 11, 8, 0xf8fafc); g.box(0, 3, 0, 8.4, 4, 8.4, 0x92400e); g.box(0, 11, 0, 9, 2, 9, 0x1f2937); g.box(0, 13, 0, 2, 1.5, 2, 0x111827); }),
+        cigs: pu(g => { g.box(0, 0, 0, 9, 12, 4, 0xf8fafc); g.box(0, 8, 0, 9.3, 4, 4.3, 0xdc2626); g.box(0, 3, 0, 5, 3, 4.4, 0x111827); g.box(-2, 12, 0, 1.6, 3.5, 1.6, 0xf5f5f4); g.box(1, 12, 0, 1.6, 2.2, 1.6, 0xd97706); }),
+        honeybun: pu(g => { g.box(0, 0, 0, 13, 4, 13, 0xb45309); g.box(0, 4, 0, 12, 1.2, 12, 0xfde68a); g.box(0, 5.2, 0, 6, 0.6, 6, 0x92400e); g.box(0, 5.8, 0, 2.5, 0.5, 2.5, 0xfde68a); }),
+        tape: pu(g => { g.box(0, 0, 0, 12, 5, 12, 0x9ca3af); g.box(0, 0, 0, 12.4, 5, 3, 0xcbd5e1); g.box(0, 5, 0, 5, 0.5, 5, 0x1f2937); g.box(6.5, 0, 0, 1, 3, 6, 0x6b7280); }),
+        taco: pu(g => { g.box(0, 0, 0, 13, 7, 5, 0xfacc15); g.box(0, 7, 0, 12, 2, 4, 0x22c55e); g.box(-3, 8.6, 0, 2.4, 1.4, 2.4, 0xdc2626); g.box(2.5, 8.6, 0, 2.4, 1.4, 2.4, 0xdc2626); g.box(0, 8.8, 0, 3, 1.2, 3, 0xfef08a); g.box(0, 0, 0, 13.4, 1.4, 5.4, 0x7c3aed); }),
+        forks: pu(g => { g.box(3, 0, -4, 24, 2, 3, 0xcbd5e1); g.box(3, 0, 4, 24, 2, 3, 0xcbd5e1); g.box(-10, 0, 0, 2, 12, 12, 0x374151); g.box(-10, 12, 0, 2, 2, 12, 0xfacc15); })
+      };
+      GEO.vplane = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0);
+      // the guy in D05: bald, flat-brim cap, hoodie, jeans, joint (faces +x)
+      GEO.stoner = pu(g => {
+        const SK = 0xe0ac69, HD = 0x4d7c0f, JN = 0x1e3a8a, CAP = 0x111827;
+        g.box(1, 0, -3, 6, 2, 3.4, 0x111111); g.box(1, 0, 3, 6, 2, 3.4, 0x111111);
+        g.box(0, 2, -3, 4, 16, 4, JN); g.box(0, 2, 3, 4, 16, 4, JN);
+        g.box(0, 18, 0, 6, 14, 11, HD); g.box(3.1, 22, 0, 0.4, 5, 7, 0x3f6212);
+        g.box(0, 19, -7, 4, 12, 3, HD); g.box(0, 16, -7, 3.4, 3, 3, SK);                 // left arm hanging
+        g.box(1, 25, 7, 4, 7, 3, HD); g.box(4, 29, 5.5, 3, 3, 3, SK);                     // right arm up at the mouth
+        g.box(0, 32, 0, 4, 2, 4, SK); g.box(0, 33.5, 0, 8, 8, 8, SK);                     // neck + big bald head
+        g.box(4.1, 36.8, -2, 0.5, 0.9, 1.6, 0x7f1d1d); g.box(4.1, 36.8, 2, 0.5, 0.9, 1.6, 0x7f1d1d);   // red eyes (behind the lenses)
+        g.box(4.1, 34.5, 0, 0.5, 0.7, 3, 0x7c2d12);
+        // thin wire-frame glasses: two lens outlines, a bridge and temple arms back to the ears
+        for (const z of [-2, 2]) {
+          const FR = 0x30343b;
+          g.box(4.45, 38.3, z, 0.3, 0.35, 2.9, FR); g.box(4.45, 35.9, z, 0.3, 0.35, 2.9, FR);
+          g.box(4.45, 35.9, z - 1.45, 0.3, 2.75, 0.35, FR); g.box(4.45, 35.9, z + 1.45, 0.3, 2.75, 0.35, FR);
+          g.box(4.4, 36.3, z, 0.15, 1.9, 2.3, 0x9fb3c8);      // faint lens tint
+          g.box(1.2, 38.1, z * 2.08, 6.4, 0.35, 0.35, FR);     // temple arm
+        }
+        g.box(4.45, 37.3, 0, 0.3, 0.35, 1.2, 0x30343b);        // bridge
+        g.box(0, 40.5, 0, 8.6, 3, 8.6, CAP); g.box(6.5, 41, 0, 6, 0.8, 9, CAP); g.box(0, 43.5, 0, 1.6, 0.6, 1.6, 0xdc2626);   // flat-brim cap
+        g.box(7, 33, 3, 4, 0.9, 0.9, 0xf5f5f4); g.box(9.3, 33, 3, 1, 1, 1, 0xff7a1a);    // the joint
+      });
       GEO.jug = (() => { const g = new GB(); g.box(0, 0, 0, 6, 9, 5, 0xf8fafc); g.box(1, 9, 0, 2, 2, 2, 0x1d4ed8); g.box(-2, 6, 0, 1.5, 4, 3, 0xe2e8f0); return g.build(); })();
       GEO.bottle = (() => { const g = new GB(); g.box(0, 0, 0, 3.5, 7, 3.5, 0xc2410c); g.box(0, 3, 0, 3.7, 2, 3.7, 0xf8fafc); g.box(0, 7, 0, 2, 2.5, 2, 0xf8fafc); return g.build(); })();
       GEO.jar = (() => { const g = new GB(); g.box(0, 0, 0, 5, 5, 5, 0xefe4bf); g.box(0, 1.5, 0, 5.2, 2, 5.2, 0x1d4ed8); g.box(0, 5, 0, 4.5, 1.5, 4.5, 0xf8fafc); return g.build(); })();
@@ -1197,6 +1237,12 @@
       MAT.cargoPut = MAT.prod[0]; MAT.cargoPick = MAT.prod[2]; MAT.cargoBot = MAT.prod[3]; MAT.cargoWrap = MAT.prod[1];
       MAT.spills = TEX.spills.map(t => ps1Mat({ map: t, transparent: true, alphaTest: 0.3, snap: 0, affine: 0 }));
       MAT.rack = ps1Mat({ map: TEX.rack });
+      MAT.prodGold = TEX.prod.map(t => ps1Mat({ map: t, color: 0xffd34d, emissive: 0.45 }));
+      MAT.puBeam = {}; MAT.puGlow = {};
+      for (const [k, P] of Object.entries(POWERUPS)) {
+        MAT.puBeam[k] = ps1Mat({ map: TEX.beam, additive: true, alphaTest: 0.02, color: P.hex, vertexColors: false, snap: 0, affine: 0, opacity: 0.8 });
+        MAT.puGlow[k] = ps1Mat({ map: TEX.glow, additive: true, alphaTest: 0.02, color: P.hex, snap: 0, affine: 0 });
+      }
       MAT.lamp = ps1Mat({ emissive: 1, color: 0xfff1c7 });
       MAT.spot = ps1Mat({ map: TEX.glow, additive: true, alphaTest: 0.02, color: 0x2a5cff, opacity: 0.8, snap: 0, affine: 0 });
       MAT.headlight = ps1Mat({ map: TEX.glow, additive: true, alphaTest: 0.02, color: 0x8a7a40, snap: 0, affine: 0 });
@@ -1270,6 +1316,7 @@
           frames.push({ x, z });
           for (const y of [0, 49, 93]) {
             if (rnd() < 0.13) continue;
+            if (y === 0 && STONER && c === STONER.c && r === STONER.r) continue;
             loads[randProd(rnd)].push({ x: x + rand(-1.5, 1.5), z: z + rand(-1.5, 1.5), y, ry: rnd() < 0.5 ? 0 : Math.PI, sy: 0.82 + rnd() * 0.18, b: 0.85 + rnd() * 0.15 });
           }
         } else if (t === T_STAGE) {
@@ -1542,6 +1589,7 @@
     }
     const SUP_VIEW = 380;
     function supSees() {
+      if (buffOn('taco')) return false;            // he's in the bathroom
       const s = supervisor();
       return !!s && s.fade > 0.5 && Math.hypot(s.x - player.x, s.y - player.y) < SUP_VIEW && hasLOS(s.x, s.y, player.x, player.y);
     }
@@ -1564,6 +1612,7 @@
     }
     function updateSupervisor(dt) {
       if (DEV.on && DEV.noSup) return;
+      if (buffOn('taco') && game.state === 'PLAYING') { const s0 = supervisor(); if (s0 && !s0.leaving) { s0.leaving = true; decideBot(s0, true); } if (!s0 && game.supT < 1) game.supT = 1; }
       if (game.state !== 'PLAYING' || game.countdown > 0) return;
       if (game.writeCd > 0) game.writeCd -= dt;
       const s = supervisor();
@@ -1625,6 +1674,7 @@
         game.spills.push(s);
         DYN[idx(L, r)] = 1; DYN[idx(L + 1, r)] = 1;
         b.carrying = false; b.state = 'idle'; b.timer = 1.4; b.speed = 0; b.pts = null;
+        b.spillJob = { s, clean: Math.random() < 0.5, seen: 0, t: 0, a0: b.angle };   // stick around: mop it up, or bail once you've seen them
         addText(b.x, b.y - 26, pick(['OOPS!', 'UH OH...', 'MY BAD!', 'WHOOPS']), '#fde047');
         spawnParticles(l + TILE, t + TILE / 2, '#c98a4b', 22, 160, 0.6);
         if (inView(l + TILE, t + TILE / 2, viewRect(0))) { audio.splat(); game.shake = Math.max(game.shake, 4); }
@@ -1652,7 +1702,7 @@
       }
       for (let i = game.spills.length - 1; i >= 0; i--) {
         const s = game.spills[i];
-        s.t += dt;
+        s.t += dt * (spillCleaning(s) ? 2.2 : 1);   // a cleanup crew more than doubles the speed
         if (s.t >= s.dur) {
           DYN[idx(s.c, s.r)] = 0; DYN[idx(s.c + 1, s.r)] = 0;
           game.spills.splice(i, 1);
@@ -1857,6 +1907,7 @@
       game.timer = shiftClock(game.shift);
       game.pending = 0; game.fines = 0; game.combo = 1;
       game.countdown = 1.6; game.lowTickSec = -1; game.rateMetShown = false;
+      game.pickups = []; game.puT = rand(8, 14); clearBuffs();
       player.integrity = S.maxHP;                     // the shop patches you up between shifts
       if (!supervisor()) game.supT = Math.max(game.supT, supAway() * 0.75);   // a quiet start to every shift
       showBanner(`SHIFT ${pad(game.shift, 2)}`, `RATE: ${game.rate} PALLETS IN ${Math.round(game.timer)}s`, '#ffd84d', 2.2);
@@ -2000,7 +2051,7 @@
     function devStart() {
       DEV.armed = 0;
       audio.init();
-      DEV.snap = JSON.stringify(save);
+      DEV.snap = JSON.stringify(save); DEV.tuneSnap = JSON.stringify(PU_TUNE);
       DEV.starting = true; startNewGame(); DEV.starting = false;
       DEV.on = true; DEV.queue = []; DEV.panel = true;
       S = stats(); player.integrity = S.maxHP;
@@ -2015,6 +2066,7 @@
       for (const k of Object.keys(save)) delete save[k];
       Object.assign(save, o);
       DEV.on = false; DEV.queue = []; DEV.scale = 1;
+      if (DEV.tuneSnap) Object.assign(PU_TUNE, JSON.parse(DEV.tuneSnap));
       S = stats();
       $('dev-panel').style.display = 'none'; $('dev-tag').style.display = 'none';
     }
@@ -2213,6 +2265,9 @@
         ${grp('EVENTS [6]', pickA(['rush', 'flicker', 'spills', 'audit', 'derby', 'endev']), 'act')}
         ${grp('SUPERVISOR', pickA(['supon', 'supoff']), 'act')}
         ${grp('TRAFFIC', pickA(['speedster', 'cruiser', 'wanderer', 'dawdler', 'putaway', 'nobots', 'shiftup', 'shiftdn']), 'act')}
+        <div class="dev-h">POWERUPS [7]</div>
+        ${[['rate', 'SPAWN RATE', 0, 4, 0.25, 'x'], ['dur', 'DURATION', 0.25, 3, 0.25, 'x'], ['power', 'STRENGTH', 0, 3, 0.25, 'x'], ['max', 'MAX ON FLOOR', 0, 12, 1, ''], ['life', 'FLOOR LIFETIME', 10, 120, 5, 's'], ['shiny', 'SHINY PALLET CHANCE', 0, 1, 0.01, '%'], ['hotLoad', 'HOT LOAD CHANCE', 0, 1, 0.05, '%']].map(([k, n, a, b, st, u]) => `<label class="dev-sl"><span>${n} <b id="pv-${k}">${devFmt(PU_TUNE[k], u)}</b></span><input type="range" data-tune="${k}" data-u="${u}" min="${a}" max="${b}" step="${st}" value="${PU_TUNE[k]}"></label>`).join('')}
+        <div class="dev-g">${PU_TYPES.map(k => `<button class="dev-b" data-give="${k}">${POWERUPS[k].name}</button>`).join('')}<button class="dev-b" data-pu="ahead">DROP ONE AHEAD</button><button class="dev-b" data-pu="floor">SPAWN ON FLOOR</button><button class="dev-b" data-pu="shiny">SHINY ON BELT</button><button class="dev-b" data-pu="clearb">CLEAR BUFFS</button><button class="dev-b" data-pu="clearp">CLEAR PICKUPS</button></div>
         ${grp('TOGGLES', DEV_TOGGLES, 'tog')}
         ${grp('TOOLS', DEV_TOOLS, 'tool')}
         <div class="dev-h">LIVE</div><div id="dev-info" class="dev-dim"></div>`;
@@ -2225,10 +2280,23 @@
       if (d.act) devQueue(d.act);
       else if (d.tool) DEV_TOOLS[d.tool][1]();
       else if (d.tog) devToggle(d.tog);
+      else if (d.give) grantBuff(d.give);
+      else if (d.pu === 'ahead') spawnPickup(null, true);
+      else if (d.pu === 'floor') { if (!spawnPickup()) devSay('NO OUT-OF-THE-WAY SPOT RIGHT NOW', '#94a3b8'); }
+      else if (d.pu === 'shiny') { const last = game.belt[game.belt.length - 1]; if (last) { last.shiny = true; devSay('NEXT PALLET IS SHINY'); } }
+      else if (d.pu === 'clearb') clearBuffs();
+      else if (d.pu === 'clearp') game.pickups = [];
       else if (d.delay !== undefined) DEV.delay = +d.delay;
       else if (d.scale !== undefined) DEV.scale = +d.scale;
       else if (d.qx !== undefined) DEV.queue.splice(+d.qx, 1);
       if (DEV.on) devRender();
+    }
+    const devFmt = (v, u) => u === '%' ? Math.round(v * 100) + '%' : (+v).toFixed(u === 'x' ? 2 : 0) + u;
+    function devInput(e) {
+      const k = e.target.dataset.tune; if (!k) return;
+      PU_TUNE[k] = +e.target.value;
+      const lab = $('pv-' + k); if (lab) lab.textContent = devFmt(PU_TUNE[k], e.target.dataset.u);
+      if (k === 'power') S = stats();
     }
     let _devInfoT = 0, _devFps = 60;
     function devTick(dt) {
@@ -2251,6 +2319,7 @@
       const map = { Digit1: 'spill', Digit2: 'burnout', Digit3: 'donut', Digit4: 'ram', Digit5: 'tbone' };
       if (e.code === 'Backquote') { DEV.panel = !DEV.panel; if (DEV.panel) devRender(); return true; }
       if (map[e.code] && !e.repeat) { devQueue(map[e.code]); return true; }
+      if (e.code === 'Digit7' && !e.repeat) { spawnPickup(null, true); return true; }
       if (e.code === 'Digit6' && !e.repeat) { devQueue(pick(['rush', 'flicker', 'spills', 'audit', 'derby'])); return true; }
       return false;
     }
@@ -2457,6 +2526,175 @@
     }
 
     // =========================================================================
+    // 9h. POWERUPS — floor pickups, timed buffs, shiny pallets
+    // =========================================================================
+    // var (not const): stats() runs before this section is reached at load time
+    var PU_ACTIVE = [];      // [{ type, t, dur }]
+    var PU_TUNE = { rate: 1, dur: 1, power: 1, max: 4, life: 45, shiny: 0.04, hotLoad: 0.35 };   // dev sliders edit these
+    const POWERUPS = {
+      energy:   { name: 'ENERGY DRINK',    dur: 15, w: 15, color: '#22c55e', hex: 0x22c55e, desc: '2X ACCEL • 2X TURBO TANK' },
+      coffee:   { name: 'COFFEE',          dur: 30, w: 16, color: '#d97706', hex: 0xd97706, desc: '1.5X ACCEL • 1.5X TOP SPEED' },
+      cigs:     { name: 'CIGS',            dur: 45, w: 12, color: '#e2e8f0', hex: 0xe2e8f0, desc: 'FOCUS: 30% LESS DAMAGE' },
+      honeybun: { name: 'HONEY BUN',       dur: 60, w: 13, color: '#fbbf24', hex: 0xfbbf24, desc: '+15% PAYOUT' },
+      tape:     { name: 'DUCT TAPE',       dur: 0,  w: 18, color: '#94a3b8', hex: 0x94a3b8, desc: '+10% REPAIR' },
+      taco:     { name: 'TACO BELL BREAK', dur: 15, w: 10, color: '#a855f7', hex: 0xa855f7, desc: 'THE BOSS IS IN THE BATHROOM' },
+      forks:    { name: 'LONG FORKS',      dur: 60, w: 9,  color: '#38bdf8', hex: 0x38bdf8, desc: '+1 PALLET CAPACITY' }
+    };
+    const PU_TYPES = Object.keys(POWERUPS);
+    const buffOn = k => PU_ACTIVE.some(b => b.type === k);
+    // stat effects of active buffs (strength slider scales the bonus part of each multiplier)
+    function applyBuffMods(o) {
+      if (!PU_ACTIVE || !PU_ACTIVE.length) return o;
+      const k = PU_TUNE.power, m = x => 1 + (x - 1) * k;
+      for (const b of PU_ACTIVE) {
+        if (b.type === 'energy') { o.accel *= m(2); o.tankDrain /= m(2); if (!o.turbo) { o.turbo = true; o.borrowedTurbo = true; } }
+        else if (b.type === 'coffee') { o.accel *= m(1.5); o.maxF *= m(1.5); }
+        else if (b.type === 'cigs') o.dmgMul *= Math.max(0.05, 1 - 0.3 * k);
+        else if (b.type === 'honeybun') o.payMul *= m(1.15);
+        else if (b.type === 'forks') o.capacity += 1;
+      }
+      return o;
+    }
+    function grantBuff(type) {
+      const P = POWERUPS[type];
+      audio.pickup(2);
+      game.flashColor = P.color; game.flash = 0.16;
+      spawnParticles(player.x, player.y, P.color, 24, 150, 0.6);
+      addText(player.x, player.y - 34, P.name + '!', P.color, true);
+      addText(player.x, player.y - 34, P.desc, '#e2e8f0');
+      if (type === 'tape') { player.integrity = Math.min(S.maxHP, player.integrity + S.maxHP * 0.1 * PU_TUNE.power); return; }
+      const dur = P.dur * PU_TUNE.dur;
+      const cur = PU_ACTIVE.find(b => b.type === type);
+      if (cur) { cur.t = 0; cur.dur = dur; } else PU_ACTIVE.push({ type, t: 0, dur });
+      if (type === 'energy') player.boost = 100, player.boostLocked = false;
+      if (type === 'taco') {
+        const s = supervisor();
+        if (s && !s.leaving) { s.leaving = true; decideBot(s, true); addText(s.x, s.y - 28, pick(['NATURE CALLS...', 'BRB', 'OH NO. NOT NOW.']), '#fecaca'); }
+      }
+      S = stats();
+    }
+    function clearBuffs() { PU_ACTIVE.length = 0; S = stats(); }
+    // a spot that's out of the way: not on/next to your guide route, not by spills, targets or the DCVR pickup
+    function pickupSpot() {
+      const guide = new Set();
+      for (const p of (game.guide.pts || [])) { const c = cellOf(p.x, p.y); for (let dc = -2; dc <= 2; dc++) for (let dr = -2; dr <= 2; dr++) guide.add(idx(c.c + dc, c.r + dr)); }
+      const ko = keepouts();
+      for (let tries = 0; tries < 80; tries++) {
+        const t = Math.random() < 0.6 ? pick(LANE_TILES) : pick(CROSS_TILES);
+        if (!t || !walkable(t.c, t.r) || DYN[idx(t.c, t.r)] || guide.has(idx(t.c, t.r)) || t.r >= R_STAGE) continue;
+        if (game.spills.some(s => Math.abs(s.r - t.r) <= 2 && Math.abs(s.c - t.c) <= 3)) continue;
+        const p = navPoint(t.c, t.r);
+        const d = Math.hypot(p.x - player.x, p.y - player.y);
+        if (d < 320 || d > 1700 || inKeepout(p.x, p.y, ko)) continue;
+        if (game.pickups.some(q => Math.hypot(q.x - p.x, q.y - p.y) < 400)) continue;
+        // lanes: sit at the edge of the lane (the side away from traffic's keep-right line is still the lane, it's fine)
+        return { x: p.x + (isLaneTile(t.c, t.r) ? (Math.random() < 0.5 ? -1 : 1) * 30 : 0), y: p.y + (p.wide ? (Math.random() < 0.5 ? -1 : 1) * 40 : 0) };
+      }
+      return null;
+    }
+    function randPU() { let x = Math.random() * PU_TYPES.reduce((a, k) => a + POWERUPS[k].w, 0); for (const k of PU_TYPES) { x -= POWERUPS[k].w; if (x < 0) return k; } return 'tape'; }
+    function spawnPickup(type, near) {
+      let p;
+      if (near) p = { x: player.x + Math.cos(player.angle) * 120, y: player.y + Math.sin(player.angle) * 120 };
+      else p = pickupSpot();
+      if (!p) return false;
+      game.pickups.push({ type: type || randPU(), x: p.x, y: p.y, t: 0, life: PU_TUNE.life, seed: Math.random() * 6 });
+      return true;
+    }
+    function updatePowerups(dt) {
+      if (game.state !== 'PLAYING' || game.countdown > 0) return;
+      // buffs tick down
+      let changed = false;
+      for (let i = PU_ACTIVE.length - 1; i >= 0; i--) {
+        const b = PU_ACTIVE[i];
+        b.t += dt;
+        if (b.t >= b.dur) { PU_ACTIVE.splice(i, 1); changed = true; addText(player.x, player.y - 40, POWERUPS[b.type].name + ' WORE OFF', '#94a3b8'); }
+      }
+      if (changed) S = stats();
+      // floor pickups: spawn, age, collect
+      game.puT = (game.puT === undefined ? rand(10, 18) : game.puT) - dt * PU_TUNE.rate;
+      if (game.puT <= 0) { game.puT = rand(14, 24); if (game.pickups.length < PU_TUNE.max) spawnPickup(); }
+      for (let i = game.pickups.length - 1; i >= 0; i--) {
+        const q = game.pickups[i];
+        q.t += dt;
+        if (q.t >= q.life) { game.pickups.splice(i, 1); continue; }
+        if (Math.hypot(q.x - player.x, q.y - player.y) < 34) { game.pickups.splice(i, 1); grantBuff(q.type); }
+      }
+    }
+
+    // ---- spill crews: the driver who dropped it hangs around until you see them bail, or (half the time) mops up ----
+    function spillJobStep(b, dt, visible) {
+      const j = b.spillJob, s = j.s;
+      j.t += dt;
+      if (!game.spills.includes(s) || j.t > 70 || b.stun > 0) {
+        b.spillJob = null;
+        if (visible && j.clean) addText(b.x, b.y - 26, pick(['ALL CLEAN!', 'GOOD AS NEW', 'NOBODY SAW NOTHIN\'']), '#86efac');
+        decideBot(b, true);
+        return true;
+      }
+      b.state = 'idle'; b.timer = 1; b.speed = 0;
+      const sx = (s.c + 1) * TILE, sy = (s.r + 0.5) * TILE;
+      if (j.clean) {
+        b.angle = wrapAngle(j.a0 + Math.sin(j.t * 4.5) * 0.14);      // mopping back and forth
+        if (visible && Math.random() < dt * 6) game.particles.push({ x: sx + rand(-40, 40), y: sy + rand(-18, 18), vx: rand(-20, 20), vy: rand(-20, 20), size: 3, color: pick(['#e0f2fe', '#bae6fd', '#f8fafc']), life: 0.7, max: 0.7, h: 4, vh: 12 });
+        if (visible && (j.say = (j.say || rand(2, 5)) - dt) <= 0) { j.say = rand(5, 9); addText(b.x, b.y - 26, pick(['*MOP MOP*', 'WHO EATS THIS STUFF', 'SMELLS LIKE RANCH', 'ON IT, BOSS', '*SQUEAK*']), '#bae6fd'); }
+      } else {
+        if (player.x > 0 && inView(sx, sy, viewRect(0))) j.seen += dt;
+        if (j.seen > 1.3) {
+          b.spillJob = null;
+          addText(b.x, b.y - 26, pick(['NOT MY PROBLEM!', 'GOTTA GO!', 'I SAW NOTHING', '*WHISTLES*', 'IT WAS LIKE THAT']), '#fde047');
+          decideBot(b, true);
+          if (b.state === 'drive') b.speed = 40;
+        }
+      }
+      return true;
+    }
+    const spillCleaning = s => game.bots.some(o => o.spillJob && o.spillJob.s === s && o.spillJob.clean);
+
+    // =========================================================================
+    // 9i. THE GUY IN D05 — chilling in an empty bottom bay, says stuff as you drive by
+    // =========================================================================
+    // ---- ADD MORE LINES HERE ----
+    // Plain strings. {spill} is replaced with the aisle of a live spill (a line using it is skipped when there are none).
+    const STONER_LINES = [
+      'Hey man...',
+      'Ehueuhuhuh',
+      'Wazzaaaaap',
+      "There's nuthin' hardcore about f@$#!n' mayonnaise...",
+      'You see that spill in aisle {spill}?',
+      "Let's go start a grass fire."
+    ];
+    const STONER = (() => {
+      const i = AISLES.indexOf(5);
+      if (i < 0) return null;
+      const c = aisleBase(i);                                   // the west rack of aisle 05, facing the lane
+      for (const r of [10, 9, 11, 12, 8, 13]) if (tileAt(c, r) === T_RACK) return { c, r, x: (c + 1) * TILE - 13, y: (r + 0.5) * TILE, angle: 0, line: null, lineT: 0, cd: 0, last: -1, puff: 0 };
+      return null;
+    })();
+    const isStonerBin = b => !!STONER && b.c === STONER.c && b.r === STONER.r;
+    function stonerSay() {
+      const sp = game.spills.length ? pick(game.spills) : null;
+      const ok = STONER_LINES.map((l, i) => i).filter(i => i !== STONER.last && (sp || !STONER_LINES[i].includes('{spill}')));
+      const i = pick(ok.length ? ok : [0]);
+      STONER.last = i;
+      STONER.line = STONER_LINES[i].replace('{spill}', sp ? pad(AISLES[LANE_OF_COL[sp.c]], 2) : '??');
+      STONER.lineT = 3.6;
+      if (audio.ctx) for (let k = 0; k < 3; k++) audio.tone(140 + Math.random() * 60, 0.07, 'triangle', 0.05, null, k * 0.09);
+    }
+    function updateStoner(dt) {
+      if (!STONER) return;
+      if (STONER.lineT > 0) STONER.lineT -= dt;
+      if (STONER.cd > 0) STONER.cd -= dt;
+      const near = Math.hypot(player.x - STONER.x, player.y - STONER.y) < 200;
+      if (game.state === 'PLAYING' && near && STONER.cd <= 0) { STONER.cd = rand(5, 8); stonerSay(); }
+      // smoke off the joint
+      if ((STONER.puff -= dt) <= 0 && inView(STONER.x, STONER.y, viewRect(0))) {
+        STONER.puff = rand(0.15, 0.35);
+        game.particles.push({ x: STONER.x + 9 + rand(-1, 1), y: STONER.y + 3 + rand(-1, 1), vx: rand(-6, 6), vy: rand(-6, 6), size: 3, color: pick(['#cbd5e1', '#e2e8f0', '#94a3b8']), life: 2.2, max: 2.2, h: 34, vh: 13 });
+      }
+    }
+
+    // =========================================================================
     // 10. SHIFT FLOW — PUTAWAY (DCVR) & TRAILER LOADING
     // =========================================================================
     function keepouts() {
@@ -2470,7 +2708,7 @@
       return k;
     }
     const inKeepout = (x, y, ko) => { for (const k of ko) if (Math.hypot(k.x - x, k.y - y) < k.r) return true; return false; };
-    const faceBlocked = b => DYN[idx(b.fc, b.fr)] === 1 || game.spills.some(s => Math.abs(s.r - b.fr) <= 1 && isLaneCol(b.fc) && LANE_OF_COL[b.fc] === LANE_OF_COL[s.c]);
+    const faceBlocked = b => isStonerBin(b) || DYN[idx(b.fc, b.fr)] === 1 || game.spills.some(s => Math.abs(s.r - b.fr) <= 1 && isLaneCol(b.fc) && LANE_OF_COL[b.fc] === LANE_OF_COL[s.c]);
 
     function binRange() {
       const hi = Math.min(150, 28 + (game.shift - 1) * 5);
@@ -2501,7 +2739,7 @@
       Object.assign(game, {
         time: 0, pending: 0, earned: 0, fines: 0, shift: 1, deliveries: 0, combo: 1, peakCombo: 1, timer: 75, countdown: 1.6,
         shake: 0, flash: 0, banner: null, lowTickSec: -1, hornCd: 0, beepCd: 0, backupCd: 0, writeCd: 0,
-        particles: [], texts: [], belt: [], beltSpawn: 0, spills: [], spillT: rand(20, 35), order: null, sup: null, supT: rand(45, 65), events: [], eventT: rand(40, 70), runEarned: 0, shiftDelivered: 0, rate: 0
+        particles: [], texts: [], belt: [], beltSpawn: 0, spills: [], pickups: [], puT: rand(8, 14), spillT: rand(20, 35), order: null, sup: null, supT: rand(45, 65), events: [], eventT: rand(40, 70), runEarned: 0, shiftDelivered: 0, rate: 0
       });
       game.guide.key = '';
       Object.assign(player, {
@@ -2545,7 +2783,7 @@
     function beltStep(dt) {
       game.beltSpawn -= dt;
       const last = game.belt[game.belt.length - 1];
-      if (game.belt.length < 8 && game.beltSpawn <= 0 && (!last || BELT_END_X - last.x >= BELT_GAP)) { game.belt.push({ x: BELT_END_X, kind: Math.random() < 0.5 ? 0 : 1 }); game.beltSpawn = 0.9; }
+      if (game.belt.length < 8 && game.beltSpawn <= 0 && (!last || BELT_END_X - last.x >= BELT_GAP)) { game.belt.push({ x: BELT_END_X, kind: Math.random() < 0.5 ? 0 : 1, shiny: Math.random() < PU_TUNE.shiny }); game.beltSpawn = 0.9; }
       for (let i = 0; i < game.belt.length; i++) game.belt[i].x = Math.max(BELT_SLOT_X + i * BELT_GAP, game.belt[i].x - 85 * dt);
     }
     const palletsReady = () => { let n = 0; for (let i = 0; i < game.belt.length; i++) if (game.belt[i].x <= BELT_SLOT_X + i * BELT_GAP + 1) n++; else break; return n; };
@@ -2568,7 +2806,8 @@
       const exclude = player.cargo.map(c => c.bin);
       for (let i = 0; i < n; i++) {
         const bin = chooseBin(exclude); exclude.push(bin);
-        player.cargo.push({ bin, t0: game.time, par: bin.dist / 3.3 + 4, prod: game.belt[0] ? game.belt[0].prod : undefined });
+        player.cargo.push({ bin, t0: game.time, par: bin.dist / 3.3 + 4, prod: game.belt[0] ? game.belt[0].prod : undefined, shiny: !!(game.belt[0] && game.belt[0].shiny) });
+        if (game.belt[0] && game.belt[0].shiny) { addText(player.x, player.y - 50, 'SHINY PALLET! x3 PAY', '#ffe14d', true); audio.cash && audio.cash(); }
         game.belt.shift();
       }
       player.liftAnim = 0.35; audio.pickup(n);
@@ -2595,7 +2834,7 @@
       const elapsed = game.time - cg.t0;
       const express = elapsed <= cg.par ? 2 : elapsed <= cg.par * 1.4 ? 1 : 0;
       const over = game.shiftDelivered > game.rate ? 1.25 : 1;
-      const earned = Math.round(palletPay(cg.bin.dist) * (express === 2 ? 1.25 : express === 1 ? 1.1 : 1) * game.combo * S.payMul * over);
+      const earned = Math.round((cg.shiny ? 3 : 1) * palletPay(cg.bin.dist) * (express === 2 ? 1.25 : express === 1 ? 1.1 : 1) * game.combo * S.payMul * over);
       game.pending += earned;                 // paid out when you clock out
       game.combo = Math.min(2, game.combo + 0.1); game.peakCombo = Math.max(game.peakCombo, game.combo);
       p.integrity = Math.min(S.maxHP, p.integrity + 3); p.liftAnim = 0.35;
@@ -2604,6 +2843,7 @@
       spawnParticles(cg.bin.face.x, cg.bin.face.y, '#38bdf8', 26, 170);
       addText(p.x, p.y - 30, `+${money(earned)}`, '#7ef29a', true);
       addText(p.x, p.y - 30, `RATE ${game.shiftDelivered}/${game.rate}`, game.shiftDelivered >= game.rate ? '#34e07f' : '#ffd84d');
+      if (cg.shiny) { addText(p.x, p.y - 30, 'SHINY x3!', '#ffe14d', true); spawnParticles(cg.bin.face.x, cg.bin.face.y, '#ffe14d', 30, 200, 0.8); }
       if (express === 2) addText(p.x, p.y - 30, 'EXPRESS!', '#38bdf8'); else if (express === 1) addText(p.x, p.y - 30, 'QUICK!', '#38bdf8');
       bumpHud(elPay); bumpHud(elDeliveries);
       rateCheck();
@@ -2638,7 +2878,7 @@
         picks.push(b); b.doorDist = b._dd;
       }
       const par = picks.reduce((s, b) => s + b.doorDist * 2 / 3.3 + 5, 0) + 10;
-      game.order = { door, picks, total: picks.length, loaded: 0, value: 0, t0: game.time, par, slots: {}, row: R_TR1 };
+      game.order = { door, picks, shiny: picks.length > 2 && Math.random() < PU_TUNE.hotLoad ? pick(picks) : null, total: picks.length, loaded: 0, value: 0, t0: game.time, par, slots: {}, row: R_TR1 };
       game.guide.key = '';
     }
     function pickLoaderHome(avoid) {
@@ -2662,7 +2902,8 @@
         const b = o.picks[i];
         if (!forksIn(player, b)) continue;
         o.picks.splice(i, 1);
-        player.cargo.push({ src: b });
+        player.cargo.push({ src: b, shiny: b === o.shiny });
+        if (b === o.shiny) addText(player.x, player.y - 50, 'HOT LOAD! x3 WHEN SEALED', '#ffe14d', true);
         player.liftAnim = 0.35; audio.pickup(1);
         spawnParticles(b.face.x, b.face.y, '#f59e0b', 16, 120);
         addText(player.x, player.y - 30, `PICKED ${b.label}`, '#fbbf24');
@@ -2685,7 +2926,7 @@
         DYN[idx(o.door.c + k, o.row)] = 1;
         const cg = player.cargo.shift();
         const over = game.shiftDelivered >= game.rate ? 1.25 : 1;
-        o.value += palletPay(cg.src.doorDist * 2) * game.combo * over;
+        o.value += palletPay(cg.src.doorDist * 2) * game.combo * over * (cg.shiny ? 3 : 1);
         o.loaded++; game.deliveries++; game.shiftDelivered++; placed++;
         game.combo = Math.min(2, game.combo + 0.1); game.peakCombo = Math.max(game.peakCombo, game.combo);
         addText(player.x, player.y - 30, `RATE ${game.shiftDelivered}/${game.rate}`, game.shiftDelivered >= game.rate ? '#34e07f' : '#ffd84d');
@@ -3042,6 +3283,7 @@
         return;
       }
 
+      if (b.spillJob && spillJobStep(b, dt, visible)) return;
       if (b.antic) { updateAntic(b, dt, visible); return; }
       switch (b.state) {
         case 'idle':
@@ -3337,6 +3579,8 @@
       if (game.state === 'PLAYING') updatePlayer(dt);
       else audio.stopEngine();
       updateHeat(dt);
+      updatePowerups(dt);
+      updateStoner(dt);
       rebuildFlow(dt);
       updateSupervisor(dt);
       updateSpills(dt);
@@ -3396,7 +3640,7 @@
       } else if (throttle < 0) {
         if (vl > 0) vl = Math.max(0, vl - S.brake * dt); else vl = Math.max(-S.rev * Math.min(1, -throttle), vl - 380 * dt);
       } else {
-        const fr = p.drifting ? 140 : 380;
+        const fr = p.drifting ? 140 : S.roll;
         vl = Math.abs(vl) <= fr * dt ? 0 : vl - Math.sign(vl) * fr * dt;
       }
       p.vx = f.x * vl + rt.x * vs; p.vy = f.y * vl + rt.y * vs;
@@ -3475,7 +3719,7 @@
       if (game.backupCd > 0) game.backupCd -= dt;
       for (let i = game.particles.length - 1; i >= 0; i--) {
         const q = game.particles[i];
-        q.x += q.vx * dt; q.y += q.vy * dt; const k = Math.pow(0.02, dt); q.vx *= k; q.vy *= k; q.life -= dt;
+        q.x += q.vx * dt; q.y += q.vy * dt; if (q.vh) q.h += q.vh * dt; const k = Math.pow(0.02, dt); q.vx *= k; q.vy *= k; q.life -= dt;
         if (q.life <= 0) { game.particles[i] = game.particles[game.particles.length - 1]; game.particles.pop(); }
       }
       for (let i = game.texts.length - 1; i >= 0; i--) { const t = game.texts[i]; t.y -= 26 * dt; t.life -= dt; if (t.life <= 0) game.texts.splice(i, 1); }
@@ -3782,7 +4026,8 @@
       if (fp) P.group.visible = game.state !== 'START';
       const n = p.cargo.length;
       P.forks.position.y = 3 + (n ? 8 : 0) + (p.liftAnim / 0.35) * 14;
-      P.cargo.forEach((m, i) => { m.visible = i < n && !(fp && i > 0); if (i < n) { const cg = p.cargo[i]; if (cg.prod === undefined) cg.prod = cg.src ? hashProd(cg.src.id || cg.src.c * 97 + cg.src.r) : randProd(); m.material = MAT.prod[cg.prod]; } });   // in first person only the bottom pallet, so you can still see
+      P.cargo.forEach((m, i) => { m.visible = i < n && !(fp && i > 0); if (i < n) { const cg = p.cargo[i]; if (cg.prod === undefined) cg.prod = cg.src ? hashProd(cg.src.id || cg.src.c * 97 + cg.src.r) : randProd(); m.material = (cg.shiny ? MAT.prodGold : MAT.prod)[cg.prod]; } });
+      if (p.cargo.some(c => c.shiny) && Math.random() < 0.3) game.particles.push({ x: p.x + Math.cos(p.angle) * 26 + rand(-10, 10), y: p.y + Math.sin(p.angle) * 26 + rand(-10, 10), vx: 0, vy: 0, size: 2, color: pick(['#fde047', '#fff7ae', '#ffffff']), life: 0.5, max: 0.5, h: 20 + rand(0, 25), vh: 20 });   // in first person only the bottom pallet, so you can still see
       P.beacon.material.uniforms.tint.value.setHex(Math.sin(t * 12) > 0 ? 0x38bdf8 : 0x1e3a8a);
       P.flame.visible = (p.boosting || p.kick > 0) && !fp;
       if (P.flame.visible) { MAT.flame.uniforms.tint.value.setHex(p.kick > 0 ? 0xc084fc : 0x38bdf8); P.flame.scale.set(18 + Math.random() * 18, 1, 14); }
@@ -3793,7 +4038,7 @@
       D.belt.forEach((m, i) => {
         const p = game.belt[i];
         m.visible = !!p;
-        if (p) { m.position.set(p.x, 22, (R_D10 + 0.5) * TILE); if (p.prod === undefined) p.prod = randProd(); m.material = MAT.prod[p.prod]; }
+        if (p) { m.position.set(p.x, 22, (R_D10 + 0.5) * TILE); if (p.prod === undefined) p.prod = randProd(); m.material = (p.shiny ? MAT.prodGold : MAT.prod)[p.prod]; if (p.shiny && Math.random() < 0.25) game.particles.push({ x: p.x + rand(-28, 28), y: (R_D10 + 0.5) * TILE + rand(-20, 20), vx: 0, vy: 0, size: 2, color: pick(['#fde047', '#fff7ae', '#ffffff']), life: 0.6, max: 0.6, h: 30 + rand(0, 30), vh: 18 }); }
       });
     }
     function syncTrailer() {
@@ -3801,6 +4046,39 @@
       const o = game.mode === 'loading' && game.state !== 'START' ? game.order : null;
       if (o) for (let r = R_TR0; r <= R_TR1; r++) { const s = o.slots[r]; if (!s) continue; for (let k = 0; k < 2; k++) if (s[k] && i < D.trailer.length) { D.trailer[i].position.set((o.door.c + k + 0.5) * TILE, 0, (r + 0.5) * TILE); D.trailer[i].visible = true; D.trailer[i].material = MAT.prod[hashProd(r * 3 + k + 11)]; i++; } }
       for (; i < D.trailer.length; i++) D.trailer[i].visible = false;
+    }
+    // ---- powerup pickups: spinning item + light beam + floor glow ----
+    function syncPickups(t) {
+      if (!D.pu) D.pu = new Map();
+      for (const g of D.pu.values()) g.seen = false;
+      const fogSq = (U.fogFar.value + 200) ** 2;
+      for (const q of game.pickups || []) {
+        let g = D.pu.get(q);
+        if (!g) {
+          g = { group: new THREE.Group(), spin: new THREE.Group() };
+          const item = new THREE.Mesh(GEO.pu[q.type], MAT.vc); item.scale.set(1.7, 1.7, 1.7); g.spin.add(item);
+          const b1 = new THREE.Mesh(GEO.vplane, MAT.puBeam[q.type]); b1.scale.set(16, 120, 1);
+          const b2 = new THREE.Mesh(GEO.vplane, MAT.puBeam[q.type]); b2.scale.set(16, 120, 1); b2.rotation.y = Math.PI / 2;
+          const glow = new THREE.Mesh(GEO.plane, MAT.puGlow[q.type]); glow.scale.set(56, 1, 56); glow.position.y = 0.9;
+          g.group.add(g.spin, b1, b2, glow);
+          scene.add(g.group); D.pu.set(q, g);
+        }
+        g.seen = true;
+        const dx = q.x - cam3.position.x, dz = q.y - cam3.position.z;
+        const left = q.life - q.t;
+        g.group.visible = dx * dx + dz * dz < fogSq && (left > 8 || Math.sin(t * (left < 3 ? 22 : 12)) > 0);
+        g.group.position.set(q.x, 0, q.y);
+        g.spin.position.y = 9 + Math.sin(t * 3 + q.seed) * 3;
+        g.spin.rotation.y = t * 2 + q.seed;
+      }
+      for (const [q, g] of D.pu) if (!g.seen) { scene.remove(g.group); D.pu.delete(q); }
+    }
+    function syncStoner(t) {
+      if (!STONER) return;
+      if (!D.stoner) { D.stoner = new THREE.Mesh(GEO.stoner, MAT.vc); scene.add(D.stoner); }
+      D.stoner.position.set(STONER.x, 0, STONER.y);
+      D.stoner.rotation.y = -STONER.angle + Math.sin(t * 0.9) * 0.12;          // swaying, very relaxed
+      D.stoner.rotation.z = Math.sin(t * 0.6) * 0.03;
     }
     function syncSpills() {
       for (const g of D.spills.values()) g.seen = false;
@@ -3843,7 +4121,7 @@
         player.cargo.forEach((cg, i) => addBin(cg.bin, 0x38bdf8, cg.bin === tg, (player.cargo.length > 1 ? `${i + 1}: ` : '') + cg.bin.label));
       } else if (game.order) {
         const room = player.cargo.length < S.capacity;
-        for (const b of game.order.picks) addBin(b, room ? 0xfbbf24 : 0x6b5a2a, room && b === tg, 'PICK ' + b.label);
+        for (const b of game.order.picks) addBin(b, b === game.order.shiny ? (room ? 0xffe14d : 0x7a6a1a) : room ? 0xfbbf24 : 0x6b5a2a, room && b === tg, (b === game.order.shiny ? 'HOT LOAD x3 ' : 'PICK ') + b.label);
         const tt = trailerTarget();
         if (tt && player.cargo.length) L.push({ x: tt.wide ? tt.face.x : tt.face.x, z: (tt.fr + 1.5) * TILE, w: tt.wide ? 94 : 46, d: 46, h: 60, color: 0x38bdf8, primary: tt === tg || !!tg && tg.slotFace,
           label: `DOOR ${pad(game.order.door.n, 2)} • ${game.order.loaded}/${game.order.total}`, fx: tt.face.x, fz: (tt.fr + 0.5) * TILE, fa: Math.PI / 2, dy: 110, tag: { x: tt.face.x, y: tt.face.y - 40, h: 120 } });
@@ -3896,7 +4174,7 @@
       if (!game.cam.init) { camState.init = false; game.cam.init = true; }
       updateCamera(dt, t);
       if (game.state !== 'START' && game.state !== 'GAMEOVER') guidePath();
-      syncPlayer(t); syncBots(t); syncBelt(); syncTrailer(); syncSpills(); syncOil();
+      syncPlayer(t); syncBots(t); syncBelt(); syncTrailer(); syncSpills(); syncOil(); syncPickups(t); syncStoner(t);
       const hl = highlightList();
       syncHighlights(t, hl);
       syncGuide(t);
@@ -3950,7 +4228,7 @@
       // particles
       for (const q of game.particles) {
         const d = camDist(q.x, q.y); if (d > maxD) continue;
-        const s = proj(q.x, q.y, 16); if (!s.ok) continue;
+        const s = proj(q.x, q.y, q.h || 16); if (!s.ok) continue;
         const sz = Math.max(2, Math.round(q.size * 260 / Math.max(80, d)));
         ctx.globalAlpha = clamp(q.life / q.max, 0, 1); ctx.fillStyle = q.color; ctx.fillRect(Math.round(s.x), Math.round(s.y), sz, sz);
       }
@@ -3968,6 +4246,7 @@
           if (camDist(x, y) > 800) continue;
           const s = proj(x, y, 40); if (!s.ok) continue;
           pixelText(`SPILL ${Math.ceil(Math.max(0, sp.dur - sp.t))}s`, s.x, s.y, '#fde68a', 7);
+          if (spillCleaning(sp)) pixelText('CLEANUP CREW ON IT', s.x, s.y + 12, '#bae6fd', 6);
         }
         // driver status bubbles
         for (const b of game.bots) {
@@ -3990,7 +4269,13 @@
       ctx.globalAlpha = 1;
       if (game.flash > 0) { ctx.globalAlpha = game.flash; ctx.fillStyle = game.flashColor; ctx.fillRect(0, 0, viewW, viewH); ctx.globalAlpha = 1; }
       if (playing) {
-        if (game.state === 'PLAYING' || game.state === 'PAUSED') { drawOffscreenMarkers(t); drawObjective(); drawSupAlert(t); drawEvents(t); }
+        for (const q of game.pickups || []) {
+          if (camDist(q.x, q.y) > 520) continue;
+          const s = proj(q.x, q.y, 38); if (!s.ok) continue;
+          tag(POWERUPS[q.type].name, s.x, s.y + Math.round(Math.sin(t * 4 + q.seed) * 2), hexRGB(POWERUPS[q.type].hex));
+        }
+        if (STONER && STONER.lineT > 0 && camDist(STONER.x, STONER.y) < 700) { const s = proj(STONER.x, STONER.y, 56); if (s.ok) drawSpeech(STONER.line, s.x, s.y, Math.min(1, STONER.lineT * 3)); }
+        if (game.state === 'PLAYING' || game.state === 'PAUSED') { drawOffscreenMarkers(t); drawObjective(); drawSupAlert(t); drawEvents(t); drawBuffs(); }
         drawRadar();
         if (game.showMap && game.state === 'PLAYING') drawBigMap(t);
         pixelText(`CAM: ${CAM_NAMES[camMode()]} (C)`, viewW - 10, viewH - 10, '#64748b', 6, 'right');
@@ -4118,7 +4403,7 @@
         ctx.fillStyle = left > 0 ? '#38bdf8' : '#334155'; ctx.fillRect(x + w - 70, y + 25, Math.round(58 * left), 5);
         pixelText(left > 0 ? 'EXPRESS' : '', x + w - 12, y + 22, '#38bdf8', 5, 'right');
         if (!o.picks.length) pixelText(player.cargo.length ? 'ALL PICKED: LOAD THE TRAILER' : '-', x + 12, y + 50, '#7ef29a', 6, 'left');
-        o.picks.slice(0, 6).forEach((b, i) => pixelText((b === game.guide.target ? '▶ ' : '• ') + b.label, x + 12, y + 50 + i * 14, b === game.guide.target ? '#fbbf24' : '#a3a3a3', 7, 'left'));
+        o.picks.slice(0, 6).forEach((b, i) => pixelText((b === game.guide.target ? '▶ ' : '• ') + b.label + (b === o.shiny ? '  HOT x3' : ''), x + 12, y + 50 + i * 14, b === o.shiny ? '#ffe14d' : b === game.guide.target ? '#fbbf24' : '#a3a3a3', 7, 'left'));
         if (o.picks.length > 6) pixelText(`+${o.picks.length - 6} MORE`, x + w - 12, y + h - 6, '#64748b', 6, 'right');
         return;
       }
@@ -4141,7 +4426,7 @@
       });
     }
     function drawRadar() {
-      const sc = viewW < 620 ? 1 : 2, rw = COLS * sc, rh = ROWS * sc, padding = 10;
+      const sc = viewW < 620 ? 1.4 : viewW < 1100 ? 2.6 : 3.2, rw = COLS * sc, rh = ROWS * sc, padding = 10;
       const rx = viewW - rw - padding, ry = padding;
       ctx.save();
       ctx.globalAlpha = 0.95;
@@ -4152,6 +4437,7 @@
       ctx.fillStyle = '#c2410c'; for (const s of game.spills) ctx.fillRect(rx + s.c * sc - 1, ry + s.r * sc - 1, sc * 2 + 2, sc + 2);
       for (const b of game.bots) { ctx.fillStyle = b.type === 'super' ? '#ff4d5e' : '#fde047'; const s = b.type === 'super' ? 4 : 2; ctx.fillRect(rx + b.x * m - s / 2, ry + b.y * m - s / 2, s, s); }
       for (const tg of currentTargets()) { ctx.fillStyle = tg.slotFace ? '#38bdf8' : game.mode === 'loading' ? '#fbbf24' : tg === CONV_FACE ? '#34e07f' : '#38bdf8'; ctx.fillRect(rx + tg.fc * sc - 2, ry + tg.fr * sc - 2, sc + 4, sc + 4); }
+      if (S.gps) for (const q of game.pickups || []) { ctx.fillStyle = Math.sin(performance.now() / 150) > -0.3 ? POWERUPS[q.type].color : '#ffffff'; ctx.fillRect(rx + q.x * m - 3, ry + q.y * m - 3, 6, 6); }
       // you + where the camera is looking
       const px = rx + player.x * m, py = ry + player.y * m, a = player.angle;
       ctx.fillStyle = 'rgba(255,255,255,0.25)';
@@ -4160,6 +4446,36 @@
       ctx.fillStyle = '#2563eb'; ctx.fillRect(px - 1, py - 1, 3, 3);
       ctx.restore();
       pixelText('TAB: MAP', rx + rw, ry + rh + 14, '#64748b', 6, 'right');
+    }
+    // comic speech bubble (the guy in D05)
+    function drawSpeech(text, x, y, alpha) {
+      ctx.save(); ctx.globalAlpha = alpha;
+      ctx.font = '8px "Press Start 2P", monospace';
+      const words = text.split(' '), lines = []; let cur = '';
+      for (const w of words) { const tst = cur ? cur + ' ' + w : w; if (ctx.measureText(tst).width > 230 && cur) { lines.push(cur); cur = w; } else cur = tst; }
+      if (cur) lines.push(cur);
+      const w = Math.max(...lines.map(l => ctx.measureText(l).width)) + 18, h = lines.length * 13 + 12;
+      const bx = Math.round(clamp(x - w / 2, 6, viewW - w - 6)), by = Math.round(y - h - 16);
+      ctx.fillStyle = '#000'; ctx.fillRect(bx + 3, by + 3, w, h);
+      ctx.fillStyle = '#f8fafc'; ctx.fillRect(bx, by, w, h);
+      ctx.beginPath(); ctx.moveTo(clamp(x, bx + 10, bx + w - 10) - 6, by + h); ctx.lineTo(clamp(x, bx + 10, bx + w - 10) + 2, by + h + 12); ctx.lineTo(clamp(x, bx + 10, bx + w - 10) + 6, by + h); ctx.fill();
+      ctx.strokeStyle = '#111827'; ctx.lineWidth = 2; ctx.strokeRect(bx, by, w, h);
+      ctx.fillStyle = '#111827'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      lines.forEach((l, i) => ctx.fillText(l, bx + 9, by + 7 + i * 13));
+      ctx.restore();
+    }
+    // active powerups, bottom-left above the speedo
+    function drawBuffs() {
+      if (!PU_ACTIVE.length) return;
+      const x = 10, w = 188;
+      PU_ACTIVE.forEach((b, i) => {
+        const P = POWERUPS[b.type], y = viewH - 112 - i * 24, left = Math.max(0, b.dur - b.t);
+        ctx.fillStyle = 'rgba(7,9,14,0.84)'; ctx.fillRect(x, y, w, 20);
+        ctx.fillStyle = P.color; ctx.fillRect(x, y, 4, 20);
+        ctx.fillStyle = P.color; ctx.globalAlpha = 0.35; ctx.fillRect(x + 4, y + 16, (w - 4) * left / b.dur, 4); ctx.globalAlpha = 1;
+        pixelText(P.name, x + 10, y + 12, left < 3 && Math.sin(performance.now() / 80) > 0 ? '#ffffff' : P.color, 7, 'left');
+        pixelText(left.toFixed(0) + 's', x + w - 8, y + 12, '#e2e8f0', 7, 'right');
+      });
     }
     function drawBigMap(t) {
       const padding = 30, sc = Math.min((viewW - padding * 2) / COLS, (viewH - padding * 2 - 30) / ROWS);
@@ -4178,11 +4494,12 @@
       for (const b of game.bots) { ctx.fillStyle = b.type === 'super' ? '#ff4d5e' : '#fde047'; const s = b.type === 'super' ? 7 : 4; ctx.fillRect(rx + b.x * m - s / 2, ry + b.y * m - s / 2, s, s); }
       for (const tg of currentTargets()) { ctx.fillStyle = game.mode === 'loading' && !tg.slotFace ? '#fbbf24' : '#38bdf8'; ctx.fillRect(rx + tg.fc * sc - 2, ry + tg.fr * sc - 2, sc + 4, sc + 4); if (tg.label) pixelText(tg.label, rx + tg.fc * sc + sc / 2, ry + tg.fr * sc - 6, '#e2e8f0', 6); }
       if (game.order) { ctx.strokeStyle = '#38bdf8'; ctx.strokeRect(rx + game.order.door.c * sc, ry + R_DOCK * sc, sc * 2, sc * 6); }
+      if (S.gps) for (const q of game.pickups || []) { ctx.fillStyle = POWERUPS[q.type].color; ctx.fillRect(rx + q.x * m - 5, ry + q.y * m - 5, 10, 10); pixelText(POWERUPS[q.type].name, rx + q.x * m, ry + q.y * m - 9, POWERUPS[q.type].color, 6); }
       const pulse = 5 + Math.sin(t * 8) * 2;
       ctx.fillStyle = '#fff'; ctx.fillRect(rx + player.x * m - pulse / 2 - 2, ry + player.y * m - pulse / 2 - 2, pulse + 4, pulse + 4);
       ctx.fillStyle = '#2563eb'; ctx.fillRect(rx + player.x * m - pulse / 2, ry + player.y * m - pulse / 2, pulse, pulse);
       pixelText('WAREHOUSE MAP', viewW / 2, ry - 16, '#ffd84d', 10);
-      pixelText('■ SPILL   ■ BOSS   ■ DRIVER', viewW / 2, ry + rh + 22, '#94a3b8', 7);
+      pixelText(S.gps ? '■ SPILL   ■ BOSS   ■ DRIVER   ■ POWERUP' : '■ SPILL   ■ BOSS   ■ DRIVER   (LIVE GPS SHOWS POWERUPS)', viewW / 2, ry + rh + 22, '#94a3b8', 7);
       ctx.restore();
     }
     function drawBanner() {
@@ -4261,6 +4578,8 @@
     btnStart.addEventListener('click', () => startNewGame());
     $('btn-dev').addEventListener('click', (e) => { e.currentTarget.blur(); devStart(); });
     $('dev-panel').addEventListener('click', devClick);
+    $('dev-panel').addEventListener('input', devInput);
+    $('dev-panel').addEventListener('change', e => { if (e.target.blur) e.target.blur(); });
     $('dev-panel').addEventListener('pointerdown', e => e.stopPropagation());
     btnRestart.addEventListener('click', () => { if (performance.now() - game.gameOverAt > 600) startNewGame(); });
     btnResume.addEventListener('click', togglePause);
