@@ -99,6 +99,23 @@
     }
     .badge { display: inline-block; padding: 3px 5px 2px; border-radius: 3px; margin-right: 4px; color: #000; box-shadow: 0 2px 0 rgba(0,0,0,0.5); }
     kbd { font-family: inherit; font-size: 7px; background: #273042; border: 1px solid #4b5a75; border-bottom-width: 2px; border-radius: 3px; padding: 1px 3px; color: #fff; }
+    #dev-panel { position: absolute; right: 8px; top: 186px; width: 262px; max-height: calc(100% - 270px); overflow-y: auto; z-index: 12; pointer-events: auto;
+      background: rgba(6,10,18,0.93); border: 2px solid #22d3ee; border-radius: 4px; padding: 8px; font-family: 'Press Start 2P', monospace; font-size: 7px; color: #e2e8f0; box-shadow: 4px 4px 0 #000; }
+    #dev-panel .dev-title { color: #67e8f9; font-size: 10px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+    #dev-panel .dev-title span { font-size: 6px; color: #64748b; }
+    #dev-panel .dev-h { color: #94a3b8; margin: 8px 0 4px; font-size: 6px; letter-spacing: 1px; }
+    #dev-panel .dev-g { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+    #dev-panel .dev-g.four { grid-template-columns: repeat(4, 1fr); }
+    #dev-panel .dev-b { font: inherit; font-size: 6px; line-height: 1.5; padding: 6px 3px; background: #1e293b; color: #e2e8f0; border: 1px solid #475569; border-radius: 3px; cursor: pointer; }
+    #dev-panel .dev-b:hover { background: #334155; border-color: #67e8f9; }
+    #dev-panel .dev-b.on { background: #0e7490; border-color: #67e8f9; color: #fff; }
+    #dev-panel .dev-qi { display: flex; gap: 6px; align-items: center; padding: 3px 0; border-bottom: 1px solid #1e293b; }
+    #dev-panel .dev-qi span { flex: 1; }
+    #dev-panel .dev-qi b { color: #facc15; }
+    #dev-panel .dev-x { font: inherit; font-size: 6px; background: #7f1d1d; color: #fff; border: 0; padding: 3px 5px; cursor: pointer; }
+    #dev-panel .dev-dim { color: #64748b; line-height: 1.8; }
+    #dev-info { color: #a5f3fc !important; }
+    #dev-tag { position: absolute; right: 8px; top: 186px; z-index: 12; font-family: 'Press Start 2P', monospace; font-size: 7px; color: #67e8f9; background: rgba(6,10,18,0.85); border: 1px solid #22d3ee; padding: 6px 8px; pointer-events: none; }
     .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
     .mode-card {
       font-family: inherit; text-align: left; cursor: pointer; color: #cbd5e1; background: #0f141e;
@@ -199,6 +216,8 @@
     <div id="canvas-container">
       <canvas id="glCanvas"></canvas>
       <canvas id="gameCanvas"></canvas>
+      <div id="dev-panel" style="display:none"></div>
+      <div id="dev-tag" style="display:none">DEV MODE &bull; ` PANEL &bull; 1-6 HOTKEYS</div>
       <div id="crt-overlay"></div>
 
       <div id="touch-controls">
@@ -221,7 +240,7 @@
         <div class="pixel-panel">
           <div class="hazard-strip"></div>
           <div class="game-title">FORKLIFT RUSH <span class="bit">3D</span></div>
-          <div class="subtitle">32-BIT PS1 EDITION // WAREHOUSE ECHB // ENDLESS SHIFTS<br>EVERY SHIFT HAS A CLOCK AND A RATE. MISS RATE: YOU&#39;RE FIRED. GET PAID AND UPGRADE BETWEEN SHIFTS.</div>
+          <div class="subtitle">32-BIT PS1 EDITION // ENDLESS SHIFTS<br>EVERY SHIFT HAS A CLOCK AND A RATE. MISS RATE: YOU&#39;RE FIRED. GET PAID AND UPGRADE BETWEEN SHIFTS.</div>
           <div class="modes">
             <button class="mode-card" data-mode="putaway"><b>PUTAWAY</b><span>Haul pallets from the DCVR conveyor (north wall, D20) to their bins. Odd bins are on the west side of each aisle, even bins on the east. <br>Paid at the end of the shift.</span></button>
             <button class="mode-card" data-mode="loading"><b>TRAILER LOADING</b><span>Pick the pallets on your list out of their bins and stack them into your trailer at the D80 docks. <br>Paid only when the trailer is sealed.</span></button>
@@ -236,6 +255,7 @@
           <div class="btn-row">
             <button class="arcade-btn garage" id="btn-start-garage">GARAGE</button>
             <button class="arcade-btn primary" id="btn-start">CLOCK IN &amp; START</button>
+            <button class="arcade-btn" id="btn-dev" style="background:linear-gradient(180deg,#0e7490,#164e63);border-color:#67e8f9">DEV MODE</button>
           </div>
           <div class="hint">PRESS ENTER TO START &bull; CASH AND UPGRADES ARE SAVED BETWEEN SHIFTS (SEPARATE FROM THE 16-BIT GAME)</div>
         </div>
@@ -642,14 +662,15 @@
       { id: 'gps', branch: 'LOGISTICS', name: 'LIVE GPS', skill: true, max: 1, cost: [1200], desc: 'Your guide line reroutes around spills.' }
     ];
     const UPG = Object.fromEntries(UPGRADES.map(u => [u.id, u]));
+    const DEV = { on: false, panel: true, delay: 0, scale: 1, queue: [], god: false, freeze: false, noSup: false, calm: false, maxUp: false, snap: null, starting: false };
     const save = (() => {
       let s = { cash: 0, best: 0, up: {}, mode: 'putaway' };
       try { const raw = storage.get('forkliftRush.ps1', null); if (raw) s = Object.assign(s, JSON.parse(raw)); } catch (e) { /* fresh */ }
       s.up = s.up || {};
       return s;
     })();
-    const persist = () => storage.set('forkliftRush.ps1', JSON.stringify(save));
-    const lvl = id => save.up[id] || 0;
+    const persist = () => { if (!DEV.on) storage.set('forkliftRush.ps1', JSON.stringify(save)); };   // dev mode never touches your save
+    const lvl = id => (DEV.on && DEV.maxUp ? UPG[id].max : save.up[id] || 0);
     function stats() {
       return {
         maxF: 205 * (1 + 0.09 * lvl('speed')) * (1 + 0.07 * lvl('motor')), accel: 430 * (1 + 0.16 * lvl('accel')) * (1 + 0.14 * lvl('battery')),
@@ -836,6 +857,121 @@
       g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = color; g.fillText(text, x, y);
     }
 
+    // ---- product loads (based on the real DC: Kraft mac & cheese, mayo, dressings) ----
+    // each product is a 128x64 atlas: left half = side of the shrink-wrapped pallet, right half = top
+    const PRODUCTS = [
+      { id: 'mac', w: 30 }, { id: 'mayo', w: 18 }, { id: 'dress', w: 20 }, { id: 'kraft', w: 14 }, { id: 'bottle', w: 9 }, { id: 'jug', w: 9 }
+    ];
+    const PROD_TOTAL = PRODUCTS.reduce((a, p) => a + p.w, 0);
+    function randProd(r = Math.random) { let x = r() * PROD_TOTAL; for (let i = 0; i < PRODUCTS.length; i++) { x -= PRODUCTS[i].w; if (x < 0) return i; } return 0; }
+    const hashProd = n => randProd(mulberry32((n * 2654435761) >>> 0));
+    function paintProduct(id, g, rnd) {
+      const W = 64, H = 64, PAL_H = 8;
+      const px = (c, x, y, w = 1, h = 1) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+      // red plastic pallet (most of the DC runs on them)
+      const pallet = (ox) => {
+        px('#b4232a', ox, H - PAL_H, W, PAL_H); px('#e04848', ox, H - PAL_H, W, 1);
+        px('#3a0d10', ox + 5, H - PAL_H + 3, 20, 5); px('#3a0d10', ox + 39, H - PAL_H + 3, 20, 5);
+        px('#7f1d1d', ox, H - 1, W, 1);
+      };
+      // shrink wrap: pale diagonal streaks + a few bright glints
+      const wrap = (ox, top) => {
+        g.save(); g.beginPath(); g.rect(ox, 0, W, top ? H : H - PAL_H); g.clip();
+        g.globalAlpha = 0.18; g.fillStyle = '#ffffff';
+        for (let i = 0; i < 7; i++) { const x = Math.floor(rnd() * 80) - 10; g.beginPath(); g.moveTo(ox + x, 0); g.lineTo(ox + x + 5, 0); g.lineTo(ox + x - 12, H); g.lineTo(ox + x - 17, H); g.fill(); }
+        g.globalAlpha = 0.75; for (let i = 0; i < 9; i++) px('#ffffff', ox + Math.floor(rnd() * W), Math.floor(rnd() * (H - PAL_H)), 1, 2 + Math.floor(rnd() * 4));
+        g.restore();
+      };
+      const sticker = (x, y) => { px('#facc15', x, y, 7, 5); px('#1f2937', x + 1, y + 1, 5, 1); px('#1f2937', x + 1, y + 3, 3, 1); };
+      const grid = (ox, rows, cols, cell) => {
+        const ch = (H - PAL_H) / rows, cw = W / cols;
+        for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) cell(ox + Math.round(c * cw), Math.round(r * ch), Math.round(cw), Math.round(ch), r, c);
+      };
+      const side = 0, top = 64;
+      if (id === 'mac') {
+        // Kraft blue cases with the yellow/orange band
+        grid(side, 4, 3, (x, y, w, h) => {
+          px('#1d4ed8', x, y, w, h); px('#2563eb', x + 1, y + 1, w - 2, 2);
+          px('#facc15', x, y + Math.floor(h * 0.45), w, 4); px('#f97316', x + 3, y + Math.floor(h * 0.45) + 1, 6, 2);
+          px('#ffffff', x + w - 8, y + 3, 5, 3);
+          px('#0f2a6b', x, y + h - 1, w, 1); px('#0f2a6b', x + w - 1, y, 1, h);
+        });
+        px('#d6b98c', top, 0, W, H); grid(top, 4, 3, (x, y, w, h) => { px('#1e40af', x + 1, y + 1, w - 2, h - 2); px('#facc15', x + 3, y + 4, w - 6, 3); });
+        px('#d9c19a', top, 0, W, 2); px('#d9c19a', top, 0, 2, H);
+      } else if (id === 'mayo') {
+        // tiers of cream plastic jars, white lids, blue label band, brown tray between layers
+        grid(side, 3, 6, (x, y, w, h) => {
+          px('#7c5a34', x, y + h - 2, w, 2);
+          px('#efe4bf', x + 1, y + 4, w - 2, h - 6); px('#fff7dc', x + 2, y + 5, 2, h - 9);
+          px('#f8fafc', x + 2, y + 1, w - 4, 3); px('#cbd5e1', x + 2, y + 3, w - 4, 1);
+          px('#1d4ed8', x + 1, y + 9, w - 2, 4); px('#fde047', x + 3, y + 10, w - 6, 2);
+        });
+        px('#7c5a34', top, 0, W, H);
+        for (let y = 2; y < H; y += 8) for (let x = 2; x < W; x += 8) { px('#f8fafc', top + x, y, 6, 6); px('#cbd5e1', top + x + 1, y + 4, 4, 1); }
+      } else if (id === 'dress') {
+        // white Kraft dressing cases with purple / blue print
+        grid(side, 5, 3, (x, y, w, h, r, c) => {
+          px('#f1f5f9', x, y, w, h);
+          const col = (r + c) % 3 === 0 ? '#7e22ce' : (r + c) % 3 === 1 ? '#4338ca' : '#be123c';
+          px(col, x + 2, y + 2, w - 4, 3); px('#a5b4fc', x + 2, y + 6, 6, 2); px(col, x + w - 6, y + 6, 3, 3);
+          px('#94a3b8', x, y + h - 1, w, 1); px('#94a3b8', x + w - 1, y, 1, h);
+        });
+        px('#e2e8f0', top, 0, W, H); grid(top, 5, 3, (x, y, w, h) => { px('#94a3b8', x + w - 1, y, 1, h); px('#94a3b8', x, y + h - 1, w, 1); px('#6d28d9', x + 3, y + 3, 5, 2); });
+      } else if (id === 'kraft') {
+        // plain corrugated cases, dark print, the odd crushed corner
+        grid(side, 5, 3, (x, y, w, h) => {
+          px('#c49a64', x, y, w, h); px('#d6ae78', x + 1, y + 1, w - 2, 1);
+          px('#3f2a17', x + 3, y + 3, 9, 1); px('#3f2a17', x + 3, y + 5, 5, 1);
+          px('#ffffff', x + w - 7, y + h - 6, 5, 4);
+          px('#8a6338', x, y + h - 1, w, 1); px('#8a6338', x + w - 1, y, 1, h);
+        });
+        px('#c79c66', top, 0, W, H); grid(top, 5, 3, (x, y, w, h) => { px('#8a6338', x + w - 1, y, 1, h); px('#8a6338', x, y + h - 1, w, 1); px('#a37a48', x + Math.floor(w / 2), y, 1, h); });
+      } else if (id === 'bottle') {
+        // trays of red-orange dressing bottles under film
+        grid(side, 3, 8, (x, y, w, h) => {
+          px('#7c5a34', x, y + h - 3, w, 3);
+          px('#c2410c', x + 1, y + 5, w - 2, h - 8); px('#f97316', x + 1, y + 6, 1, h - 11);
+          px('#f8fafc', x + 1, y + 9, w - 2, 3);
+          px('#f8fafc', x + 2, y + 1, w - 4, 4);
+        });
+        px('#7c5a34', top, 0, W, H);
+        for (let y = 2; y < H; y += 6) for (let x = 2; x < W; x += 6) px('#f8fafc', top + x, y, 4, 4);
+      } else if (id === 'jug') {
+        // gallon mayo jugs: brown cases with the white jugs peeking out of the hand holes
+        grid(side, 3, 2, (x, y, w, h) => {
+          px('#b78a55', x, y, w, h); px('#cfa46c', x + 1, y + 1, w - 2, 1);
+          px('#f8fafc', x + 6, y + 4, 8, 6); px('#e2e8f0', x + 6, y + 9, 8, 1);
+          px('#f8fafc', x + w - 14, y + 4, 8, 6);
+          px('#1d4ed8', x + 4, y + h - 6, w - 8, 2);
+          px('#7a5530', x, y + h - 1, w, 1); px('#7a5530', x + w - 1, y, 1, h);
+        });
+        px('#b78a55', top, 0, W, H); grid(top, 3, 2, (x, y, w, h) => { px('#7a5530', x + w - 1, y, 1, h); px('#7a5530', x, y + h - 1, w, 1); px('#f8fafc', x + 6, y + 6, 6, 5); px('#f8fafc', x + w - 12, y + 6, 6, 5); });
+      }
+      pallet(side);
+      sticker(side + 4 + Math.floor(rnd() * 40), 8 + Math.floor(rnd() * 30));
+      wrap(side, false); wrap(top, true);
+    }
+    // spill puddles: mayo, dressing, mac & cheese powder
+    function paintSpill(kind, g, rnd, W, H) {
+      const blob = (cx, cy, rx, ry, col) => { g.fillStyle = col; g.beginPath(); g.ellipse(cx, cy, rx, ry, rnd() * 3, 0, Math.PI * 2); g.fill(); };
+      if (kind === 'mayo') {
+        for (let i = 0; i < 9; i++) blob(W / 2 + (rnd() - 0.5) * W * 0.6, H / 2 + (rnd() - 0.5) * H * 0.45, 6 + rnd() * 14, 4 + rnd() * 7, '#d8cba0');
+        for (let i = 0; i < 8; i++) blob(W / 2 + (rnd() - 0.5) * W * 0.55, H / 2 + (rnd() - 0.5) * H * 0.4, 5 + rnd() * 11, 3 + rnd() * 5, '#f4ecd0');
+        g.fillStyle = '#fffdf3'; for (let i = 0; i < 14; i++) g.fillRect(Math.floor(W * 0.2 + rnd() * W * 0.6), Math.floor(H * 0.25 + rnd() * H * 0.5), 2, 1);
+      } else if (kind === 'dress') {
+        for (let i = 0; i < 7; i++) blob(W / 2 + (rnd() - 0.5) * W * 0.6, H / 2 + (rnd() - 0.5) * H * 0.4, 6 + rnd() * 12, 3 + rnd() * 6, 'rgba(92,34,12,0.95)');
+        for (let i = 0; i < 4; i++) { g.strokeStyle = 'rgba(110,40,14,0.95)'; g.lineWidth = 2; g.beginPath(); const x = W * 0.3 + rnd() * W * 0.4, y = H / 2; g.moveTo(x, y); g.lineTo(x + (rnd() - 0.5) * W * 0.8, y + (rnd() - 0.5) * H); g.stroke(); }
+        for (let i = 0; i < 5; i++) blob(W / 2 + (rnd() - 0.5) * W * 0.4, H / 2 + (rnd() - 0.5) * H * 0.3, 4 + rnd() * 6, 2 + rnd() * 3, 'rgba(194,84,28,0.95)');
+        g.fillStyle = 'rgba(255,220,180,0.9)'; for (let i = 0; i < 8; i++) g.fillRect(Math.floor(W * 0.25 + rnd() * W * 0.5), Math.floor(H * 0.3 + rnd() * H * 0.4), 2, 1);
+      } else {
+        // mac & cheese: cheese powder drifts + spilled noodles
+        for (let i = 0; i < 10; i++) blob(W / 2 + (rnd() - 0.5) * W * 0.65, H / 2 + (rnd() - 0.5) * H * 0.5, 5 + rnd() * 12, 3 + rnd() * 6, 'rgba(245,158,11,0.9)');
+        for (let i = 0; i < 6; i++) blob(W / 2 + (rnd() - 0.5) * W * 0.5, H / 2 + (rnd() - 0.5) * H * 0.4, 4 + rnd() * 8, 2 + rnd() * 4, 'rgba(253,224,71,0.95)');
+        for (let i = 0; i < 60; i++) { g.fillStyle = rnd() < 0.5 ? '#fde68a' : '#fbbf24'; g.fillRect(Math.floor(W * 0.1 + rnd() * W * 0.8), Math.floor(H * 0.15 + rnd() * H * 0.7), 2, 1); }
+      }
+    }
+    const SPILL_KINDS = ['mayo', 'dress', 'mac'];
+
     // ---- low-res PS1 textures ----
     const SIGN_UV = {};
     function buildTextures() {
@@ -875,7 +1011,20 @@
         g.fillStyle = 'rgba(210, 160, 40, 0.95)'; g.beginPath(); g.ellipse(22, 19, 13, 6, 0.3, 0, Math.PI * 2); g.fill(); g.beginPath(); g.ellipse(44, 11, 11, 5, -0.4, 0, Math.PI * 2); g.fill();
         g.fillStyle = 'rgba(255,240,200,0.9)'; g.fillRect(20, 16, 3, 1); g.fillRect(42, 9, 3, 1);
       });
-      TEX.oil = canvasTex(32, 32, g => { g.fillStyle = 'rgba(8,9,15,0.95)'; g.beginPath(); g.ellipse(16, 16, 15, 11, 0.3, 0, Math.PI * 2); g.fill(); g.fillStyle = 'rgba(120,80,190,0.9)'; g.fillRect(10, 12, 6, 1); g.fillRect(14, 18, 5, 1); });
+      TEX.prod = PRODUCTS.map((p, i) => canvasTex(128, 64, g => paintProduct(p.id, g, mulberry32(101 + i))));
+      TEX.spills = SPILL_KINDS.map((k, i) => canvasTex(96, 48, (g, w, h) => paintSpill(k, g, mulberry32(303 + i), w, h)));
+      TEX.rack = canvasTex(32, 32, g => {
+        g.fillStyle = '#fff'; g.fillRect(0, 0, 32, 32);
+        g.fillStyle = '#d8dde3'; g.fillRect(16, 0, 1, 32);
+        g.fillStyle = '#7d8a86'; for (let y = 4; y < 32; y += 16) g.fillRect(23, y, 2, 4);
+        g.fillStyle = '#ffffff'; g.fillRect(17, 0, 2, 32);
+      }, true);
+      TEX.oilOld = canvasTex(32, 32, g => { g.fillStyle = 'rgba(8,9,15,0.95)'; g.beginPath(); g.ellipse(16, 16, 15, 11, 0.3, 0, Math.PI * 2); g.fill(); g.fillStyle = 'rgba(120,80,190,0.9)'; g.fillRect(10, 12, 6, 1); g.fillRect(14, 18, 5, 1); });
+      TEX.oil = canvasTex(32, 32, g => {
+        g.fillStyle = 'rgba(214,120,30,0.85)'; g.beginPath(); g.ellipse(16, 16, 15, 11, 0.3, 0, Math.PI * 2); g.fill();
+        g.fillStyle = 'rgba(240,170,60,0.9)'; g.beginPath(); g.ellipse(13, 14, 8, 5, 0.3, 0, Math.PI * 2); g.fill();
+        for (const [x, y, c] of [[8, 14, '#166534'], [18, 10, '#15803d'], [21, 19, '#b91c1c'], [12, 20, '#166534'], [24, 14, '#fef3c7'], [10, 11, '#fef3c7']]) { g.fillStyle = c; g.fillRect(x, y, 2, 1); }
+      });
       TEX.tape = canvasTex(32, 8, g => { g.fillStyle = '#111'; g.fillRect(0, 0, 32, 8); g.fillStyle = '#facc15'; for (let x = -8; x < 32; x += 8) { g.beginPath(); g.moveTo(x, 8); g.lineTo(x + 4, 0); g.lineTo(x + 8, 0); g.lineTo(x + 4, 8); g.fill(); } }, true);
       // sign atlas: aisle numbers, cross aisles, DCVR, doors
       const labels = [...AISLES.map(a => 'D' + pad(a, 2)), 'D20', 'D40', 'D80', 'DCVR', ...DOORS.map(d => 'DOOR ' + pad(d.n, 2))];
@@ -987,8 +1136,8 @@
       GEO.playerForks = gb.build();
       // pallet + load (used for every carried / belt / trailer pallet)
       gb = new GB();
-      gb.box(0, 0, 0, 22, 4, 22, 0x8a5a2b, { uv: [0, 0, 1, 0.16] });
-      gb.box(0, 4, 0, 20, 16, 20, 0xffffff, { uv: [0, 0.16, 1, 1] });
+      gb.box(0, 0, 0, 22, 3, 22, 0xffffff, { uv: [0, 0, 0.5, 0.125], uvTop: [0, 0, 0.5, 0.125] });
+      gb.box(0, 3, 0, 21, 18, 21, 0xffffff, { uv: [0, 0.125, 0.5, 1], uvTop: [0.5, 0, 1, 1] });
       GEO.cargo = gb.build();
       // stand-up reach trucks, one per hard-hat colour
       const HATS = { cruiser: 0xf8fafc, putaway: 0xf97316, speedster: 0xef4444, dawdler: 0x60a5fa, wanderer: 0xa855f7, loader: 0x22c55e };
@@ -1029,7 +1178,10 @@
       // generic pieces
       GEO.plane = new GB().quad([-0.5, 0, 0.5], [0.5, 0, 0.5], [0.5, 0, -0.5], [-0.5, 0, -0.5], [0, 1, 0], [1, 1, 1]).build();
       GEO.hlBox = new GB().box(0, 0, 0, 1, 1, 1, 0xffffff).build();
-      GEO.smallBox = new GB().box(0, 0, 0, 10, 8, 10, 0xffffff, { uv: [0, 0.16, 1, 1] }).build();
+      GEO.smallBox = new GB().box(0, 0, 0, 10, 8, 10, 0xffffff, { uv: [0.02, 0.6, 0.18, 0.78], uvTop: [0.6, 0.6, 0.76, 0.78] }).build();
+      GEO.jug = (() => { const g = new GB(); g.box(0, 0, 0, 6, 9, 5, 0xf8fafc); g.box(1, 9, 0, 2, 2, 2, 0x1d4ed8); g.box(-2, 6, 0, 1.5, 4, 3, 0xe2e8f0); return g.build(); })();
+      GEO.bottle = (() => { const g = new GB(); g.box(0, 0, 0, 3.5, 7, 3.5, 0xc2410c); g.box(0, 3, 0, 3.7, 2, 3.7, 0xf8fafc); g.box(0, 7, 0, 2, 2.5, 2, 0xf8fafc); return g.build(); })();
+      GEO.jar = (() => { const g = new GB(); g.box(0, 0, 0, 5, 5, 5, 0xefe4bf); g.box(0, 1.5, 0, 5.2, 2, 5.2, 0x1d4ed8); g.box(0, 5, 0, 4.5, 1.5, 4.5, 0xf8fafc); return g.build(); })();
       GEO.tape = new GB().box(0, 0, 0, 94, 3, 1.5, 0xffffff, { uvZ: [0, 0, 6, 1], uvX: [0, 0, 1, 1], uvTop: [0, 0, 6, 1] }).build();
       GEO.cone = (() => { const g = new GB(); g.box(0, 0, 0, 9, 2, 9, 0xea580c); g.box(0, 2, 0, 6, 5, 6, 0xf97316); g.box(0, 6, 0, 5, 2, 5, 0xffffff); g.box(0, 8, 0, 3, 5, 3, 0xf97316); return g.build(); })();
       GEO.ring = new THREE.RingGeometry(0.92, 1, 40).rotateX(-Math.PI / 2);
@@ -1041,10 +1193,10 @@
       MAT.vc = ps1Mat({});
       MAT.card = ps1Mat({ map: TEX.card });
       MAT.wrap = ps1Mat({ map: TEX.wrap });
-      MAT.cargoPut = ps1Mat({ map: TEX.card, color: 0x34d399 });
-      MAT.cargoPick = ps1Mat({ map: TEX.card, color: 0xfbbf24 });
-      MAT.cargoBot = ps1Mat({ map: TEX.card, color: 0xd9a066 });
-      MAT.cargoWrap = ps1Mat({ map: TEX.wrap });
+      MAT.prod = TEX.prod.map(t => ps1Mat({ map: t }));
+      MAT.cargoPut = MAT.prod[0]; MAT.cargoPick = MAT.prod[2]; MAT.cargoBot = MAT.prod[3]; MAT.cargoWrap = MAT.prod[1];
+      MAT.spills = TEX.spills.map(t => ps1Mat({ map: t, transparent: true, alphaTest: 0.3, snap: 0, affine: 0 }));
+      MAT.rack = ps1Mat({ map: TEX.rack });
       MAT.lamp = ps1Mat({ emissive: 1, color: 0xfff1c7 });
       MAT.spot = ps1Mat({ map: TEX.glow, additive: true, alphaTest: 0.02, color: 0x2a5cff, opacity: 0.8, snap: 0, affine: 0 });
       MAT.headlight = ps1Mat({ map: TEX.glow, additive: true, alphaTest: 0.02, color: 0x8a7a40, snap: 0, affine: 0 });
@@ -1088,33 +1240,45 @@
       const under = new THREE.PlaneGeometry(WORLD_W * 3, WORLD_H * 3, 8, 8).rotateX(-Math.PI / 2).translate(WORLD_W / 2, -1, WORLD_H / 2);
       scene.add(new THREE.Mesh(under, ps1Mat({ color: 0x0c0e14, vertexColors: false, snap: 0, affine: 0, dither: 0 })));
 
-      // racks: blue uprights + orange decks, loads on three levels
+      // racks: green perforated uprights with cross bracing, orange step beams, wire decks, labels
       const rnd = mulberry32(77);
       let gb = new GB();
-      for (const [x, z] of [[-22, -22], [22, -22], [-22, 22], [22, 22]]) gb.box(x, 0, z, 3, RACK_H, 3, 0x1d4ed8);
-      for (const y of [2, 46, 90]) { gb.box(0, y, 0, 47, 3, 47, 0xc2410c, { noTop: false }); }
-      gb.box(0, RACK_H - 3, -22, 47, 3, 3, 0xc2410c); gb.box(0, RACK_H - 3, 22, 47, 3, 3, 0xc2410c);
+      const PLAIN = [0, 0, 0.45, 1], UPR = [0.53, 0, 0.97, RACK_H / 20];
+      const GREEN = 0x3f7f68, ORANGE = 0xe0531f;
+      for (const [x, z] of [[-22, -22], [22, -22], [-22, 22], [22, 22]]) gb.box(x, 0, z, 3.4, RACK_H, 3.4, GREEN, { uv: UPR, noTop: true });
+      // bracing in the frames (perpendicular to the aisle)
+      const strip = (x0, y0, x1, y1, z) => {
+        const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy), nx = -dy / L * 0.9, ny = dx / L * 0.9, cl = rgb(GREEN);
+        gb.quad([x0 - nx, y0 - ny, z], [x1 - nx, y1 - ny, z], [x1 + nx, y1 + ny, z], [x0 + nx, y0 + ny, z], [0, 0, 1], cl, PLAIN);
+      };
+      for (const z of [-22, 22]) {
+        strip(-21, 8, 21, 8, z); strip(-21, RACK_H - 6, 21, RACK_H - 6, z);
+        for (let y = 8, k = 0; y < RACK_H - 6; y += 22, k++) { const y2 = Math.min(RACK_H - 6, y + 22); strip(k % 2 ? 21 : -21, y, k % 2 ? -21 : 21, y2, z); }
+      }
+      for (const y of [44, 88, RACK_H - 6]) for (const x of [-22, 22]) {
+        gb.box(x, y, 0, 3, 5, 48, ORANGE, { uv: PLAIN });
+        if (y < RACK_H - 6) { const fx = x + Math.sign(x) * 1.55; gb.quad([fx, y + 0.8, -15], [fx, y + 0.8, -7], [fx, y + 4.2, -7], [fx, y + 4.2, -15], [Math.sign(x), 0, 0], rgb(0xf8fafc), PLAIN);
+          gb.quad([fx, y + 0.8, 7], [fx, y + 0.8, 15], [fx, y + 4.2, 15], [fx, y + 4.2, 7], [Math.sign(x), 0, 0], rgb(0xfde047), PLAIN); }
+      }
+      for (const y of [48.6, 92.6]) gb.flat(0, y, 0, 41, 44, 0x6b7280, PLAIN);
       const frameG = gb.build();
-      const loadG = new GB().box(0, 0, 0, 40, 38, 40, 0xffffff).build();
-      const frames = [], cards = [], wraps = [];
-      const PAL = [0xd9a066, 0xc98a4b, 0xe0b483, 0x38bdf8, 0x4ade80, 0xf87171, 0xc084fc, 0xf1f5f9, 0xd9a066, 0xd9a066];
+      const loadG = new GB().box(0, 0, 0, 40, 40, 40, 0xffffff, { uv: [0, 0, 0.5, 1], uvTop: [0.5, 0, 1, 1] }).build();
+      const frames = [], loads = PRODUCTS.map(() => []);
       for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
         const t = tileAt(c, r), x = (c + 0.5) * TILE, z = (r + 0.5) * TILE;
         if (t === T_RACK) {
           frames.push({ x, z });
-          for (const y of [5, 49, 93]) {
+          for (const y of [0, 49, 93]) {
             if (rnd() < 0.13) continue;
-            const it = { x: x + rand(-1.5, 1.5), z: z + rand(-1.5, 1.5), y, ry: rnd() < 0.5 ? 0 : Math.PI / 2, sy: 0.85 + rnd() * 0.15, col: pick(PAL) };
-            (rnd() < 0.25 ? wraps : cards).push(it);
+            loads[randProd(rnd)].push({ x: x + rand(-1.5, 1.5), z: z + rand(-1.5, 1.5), y, ry: rnd() < 0.5 ? 0 : Math.PI, sy: 0.82 + rnd() * 0.18, b: 0.85 + rnd() * 0.15 });
           }
         } else if (t === T_STAGE) {
-          cards.push({ x, z, y: 0, col: pick(PAL), ry: rnd() * 0.2 });
-          if (rnd() < 0.45) wraps.push({ x, z, y: 38, sy: 0.8, col: 0xffffff });
+          loads[randProd(rnd)].push({ x, z, y: 0, ry: rnd() * 0.2, sy: 0.9, b: 0.95 });
+          if (rnd() < 0.45) loads[randProd(rnd)].push({ x, z, y: 36, sy: 0.75, b: 0.9, ry: rnd() * 0.2 });
         }
       }
-      instanced(frameG, MAT.vc, frames);
-      instanced(loadG, MAT.card, cards, it => new THREE.Color(it.col));
-      instanced(loadG, MAT.wrap, wraps, it => new THREE.Color(it.col || 0xffffff));
+      instanced(frameG, MAT.rack, frames);
+      loads.forEach((list, i) => instanced(loadG, MAT.prod[i], list, it => new THREE.Color(it.b, it.b, it.b)));
 
       // walls, trailer walls, chargers
       const wallG = new GB().box(0, 0, 0, TILE, WALL_H, TILE, 0xffffff, { uv: [0, 0, 1.5, WALL_H / 32], uvTop: [0, 0, 1.5, 1.5] }).build();
@@ -1353,7 +1517,7 @@
 
     function damagePlayer(amount, hx, hy, label, heavy = true) {
       if (player.invuln > 0 || game.state !== 'PLAYING') return;
-      amount = Math.max(1, Math.round(amount * S.dmgMul));
+      amount = DEV.on && DEV.god ? 0 : Math.max(1, Math.round(amount * S.dmgMul));
       player.integrity = Math.max(0, player.integrity - amount);
       player.invuln = 0.9;
       if (game.combo > 1) addText(player.x, player.y - 46, 'COMBO LOST', '#94a3b8');
@@ -1399,6 +1563,7 @@
       return true;
     }
     function updateSupervisor(dt) {
+      if (DEV.on && DEV.noSup) return;
       if (game.state !== 'PLAYING' || game.countdown > 0) return;
       if (game.writeCd > 0) game.writeCd -= dt;
       const s = supervisor();
@@ -1408,7 +1573,7 @@
         if (game.supT <= 0) {
           const b = spawnBot('super', 650);
           if (b) {
-            game.sup = b; b.leaving = false; game.supT = Math.min(120, rand(35, 55) * (1 + 0.05 * (game.shift - 1)));
+            game.sup = b; b.leaving = false; game.supT = supStay();
             audio.radio();
             showBanner('SUPERVISOR ON THE FLOOR', 'STOP AT THE STOP LINES • DON\'T CRASH', '#ff4d5e', 2.2);
           } else game.supT = 3;
@@ -1418,7 +1583,7 @@
       if (!s.leaving && game.supT <= 0) { s.leaving = true; decideBot(s, true); }
       if (s.leaving && !inView(s.x, s.y, viewRect(60)) && Math.hypot(s.x - player.x, s.y - player.y) > 700) {
         game.bots.splice(game.bots.indexOf(s), 1);
-        game.sup = null; game.supT = Math.max(8, rand(25, 50) / (1 + 0.08 * (game.shift - 1)));
+        game.sup = null; game.supT = supAway();
       }
     }
 
@@ -1482,7 +1647,7 @@
     }
     function updateSpills(dt) {
       if (game.state === 'PLAYING' && game.countdown <= 0) {
-        game.spillT -= dt;
+        if (!(DEV.on && DEV.calm)) game.spillT -= dt;
         if (game.spillT <= 0) game.spillT = trySpill() ? Math.max(5, rand(30, 55) / (1 + 0.12 * (game.shift - 1))) : 4;
       }
       for (let i = game.spills.length - 1; i >= 0; i--) {
@@ -1558,7 +1723,7 @@
       }
       // from shift 4 on, chaos also strikes mid-shift — more often every shift
       if (game.shift >= 4) {
-        game.eventT -= dt;
+        if (!(DEV.on && DEV.calm)) game.eventT -= dt;
         if (game.eventT <= 0) {
           startRandomEvent();
           if (game.shift >= 10 && Math.random() < 0.4) startRandomEvent();
@@ -1683,6 +1848,9 @@
     const palletPay = d => 9 * distMult(d) * shiftMult();
     const rateBonus = () => Math.round(35 * game.shift * S.payMul);
 
+    // supervisor rhythm: rare, short visits early on; longer, more frequent ones as the shifts climb
+    function supAway() { return Math.max(10, rand(60, 90) / (1 + 0.14 * (game.shift - 1))); }
+    function supStay() { return Math.min(80, rand(15, 24) * (1 + 0.12 * (game.shift - 1))); }
     function beginShift() {
       game.shiftDelivered = 0;
       game.rate = shiftRate(game.shift);
@@ -1690,6 +1858,7 @@
       game.pending = 0; game.fines = 0; game.combo = 1;
       game.countdown = 1.6; game.lowTickSec = -1; game.rateMetShown = false;
       player.integrity = S.maxHP;                     // the shop patches you up between shifts
+      if (!supervisor()) game.supT = Math.max(game.supT, supAway() * 0.75);   // a quiet start to every shift
       showBanner(`SHIFT ${pad(game.shift, 2)}`, `RATE: ${game.rate} PALLETS IN ${Math.round(game.timer)}s`, '#ffd84d', 2.2);
     }
     function rateCheck() {
@@ -1800,7 +1969,8 @@
         if (a.t > 1.2) { b.antic = null; decideBot(b, true); }
         return true;
       }
-      if (scanAhead(b, 40).who === player) { b.antic = null; b.speed = 0; decideBot(b, true); return true; }
+      if (a.atPlayer && b.stun > 0) { b.antic = null; return true; }               // dev impact: it hit you, now it spins out
+      if (!a.atPlayer && scanAhead(b, 40).who === player) { b.antic = null; b.speed = 0; decideBot(b, true); return true; }
       b.dir = 1;
       b.speed = Math.min(b.cruise * 1.6 + 60, b.speed + 650 * dt);
       const contacts = [];
@@ -1822,6 +1992,468 @@
       }
       if (a.t > 2.2) { b.antic = null; b.speed = 0; decideBot(b, true); }
       return true;
+    }
+
+    // =========================================================================
+    // 9f. DEVELOPER MODE — no clock, no rate, nothing saved; queue chaos on demand
+    // =========================================================================
+    function devStart() {
+      DEV.armed = 0;
+      audio.init();
+      DEV.snap = JSON.stringify(save);
+      DEV.starting = true; startNewGame(); DEV.starting = false;
+      DEV.on = true; DEV.queue = []; DEV.panel = true;
+      S = stats(); player.integrity = S.maxHP;
+      game.timer = 999; game.rate = 0; game.rateMetShown = true;
+      if (DEV.noSup) game.supT = 1e9;
+      showBanner('DEVELOPER MODE', 'NO CLOCK • NO RATE • NOTHING IS SAVED • ` TOGGLES THE PANEL', '#22d3ee', 2.6);
+      devRender();
+    }
+    function devExit() {
+      if (!DEV.on) return;
+      const o = JSON.parse(DEV.snap);
+      for (const k of Object.keys(save)) delete save[k];
+      Object.assign(save, o);
+      DEV.on = false; DEV.queue = []; DEV.scale = 1;
+      S = stats();
+      $('dev-panel').style.display = 'none'; $('dev-tag').style.display = 'none';
+    }
+    // ---- actions ----
+    const devSay = (t, c = '#22d3ee') => addText(player.x, player.y - 56, t, c);
+    function devSpill() {
+      const fx = player.x + Math.cos(player.angle) * 4 * TILE, fy = player.y + Math.sin(player.angle) * 4 * TILE;
+      const cands = [];
+      for (let a = 0; a < AISLES.length; a++) {
+        const L = aisleBase(a) + 1;
+        for (const [r0, r1] of [[R_N0, R_N1], [R_S0, R_S1]]) for (let r = r0; r <= r1; r++) {
+          if (!isLaneTile(L, r) || isMouthRow(r)) continue;
+          if (game.spills.some(s => s.c === L && laneHalf(s.r) === laneHalf(r))) continue;
+          cands.push({ L, r, d: Math.hypot((L + 1) * TILE - fx, (r + 0.5) * TILE - fy) });
+        }
+      }
+      cands.sort((a, b) => a.d - b.d);
+      for (const { L, r } of cands.slice(0, 80)) {
+        const l = L * TILE, t = r * TILE;
+        const clear = e => !circOf(e, bodyOf(e)).some(c => circleVsBox(c.x, c.y, c.r + 3, l, t, l + TILE * 2, t + TILE));
+        if (!clear(player)) continue;
+        let ok = true; sgEach(l + TILE, t + TILE / 2, 120, o => { if (ok && !clear(o)) ok = false; });
+        if (!ok) continue;
+        const s = { c: L, r, t: 0, dur: rand(40, 65) };
+        game.spills.push(s); DYN[idx(L, r)] = 1; DYN[idx(L + 1, r)] = 1;
+        spawnParticles(l + TILE, t + TILE / 2, '#c98a4b', 22, 160, 0.6);
+        audio.splat(); game.shake = Math.max(game.shake, 3);
+        for (const o of game.bots) if (o.pts && routeHits(o, s)) replanBot(o);
+        devSay(`SPILL IN D${pad(AISLES[LANE_OF_COL[L]], 2)}`, '#c98a4b');
+        return true;
+      }
+      devSay('NO ROOM FOR A SPILL (ONE PER LANE HALF)', '#94a3b8'); return false;
+    }
+    function devClearSpills() {
+      for (const s of game.spills) { DYN[idx(s.c, s.r)] = 0; DYN[idx(s.c + 1, s.r)] = 0; }
+      game.spills = []; devSay('SPILLS CLEANED');
+    }
+    function devNearBots(n) {
+      return game.bots.filter(b => b.type !== 'super' && !b.antic && !(b.stun > 0) && !b.temp && b.state !== 'insert' && b.state !== 'park')
+        .map(b => ({ b, d: Math.hypot(b.x - player.x, b.y - player.y) + (inView(b.x, b.y, viewRect(0)) ? 0 : 2000) }))
+        .sort((p, q) => p.d - q.d).slice(0, n).map(p => p.b);
+    }
+    function devAntic(kind, n = 1) {
+      let done = 0;
+      for (const b of devNearBots(n * 4)) {
+        if (done >= n) break;
+        const cell = cellOf(b.x, b.y);
+        let angle = 0;
+        if (kind === 'ram') {
+          const opts = [];
+          for (const [dx, dy] of [[0, -1], [0, 1], [1, 0], [-1, 0]]) for (let k = 1; k <= 3; k++) {
+            if (!walkable(cell.c + dx * k, cell.r + dy * k)) { const t = tileAt(cell.c + dx * k, cell.r + dy * k); if ((t === T_RACK || t === T_WALL || t === T_STAGE) && k >= 2) opts.push(Math.atan2(dy, dx)); break; }
+          }
+          if (!opts.length) continue;
+          angle = pick(opts);
+        }
+        b.state = 'drive'; b.speed = 0;
+        b.antic = { kind, angle, t: 0, phase: 0, dur: rand(2, 3.4), spin: (Math.random() < 0.5 ? -1 : 1) * rand(6, 9), cd: 0 };
+        addText(b.x, b.y - 30, pick(kind === 'ram' ? ['WATCH THIS!', 'NO BRAKES!', 'HOLD MY COFFEE'] : ['WOOOO!', 'SEND IT', 'BRAAAP']), '#fde047');
+        done++;
+      }
+      if (!done) devSay('NO DRIVER CAN DO THAT NEARBY', '#94a3b8');
+      return done > 0;
+    }
+    function devChaos() {
+      let n = 0;
+      for (const b of devNearBots(14)) { const k = pick(['burnout', 'donut', 'ram']); b.antic = null; if (devAnticOn(b, k)) n++; }
+      devSay(`MASS CHAOS x${n}`, '#facc15');
+    }
+    function devAnticOn(b, kind) { const keep = devNearBots; devNearBots = () => [b]; const ok = devAntic(kind, 1); devNearBots = keep; return ok; }
+    // a driver comes flying at you: from the side, head-on or from behind
+    function devImpact(from, quiet) {
+      const rel = { side: [[Math.PI / 2, -Math.PI / 2], [Math.PI / 3, -Math.PI / 3, 2 * Math.PI / 3, -2 * Math.PI / 3], [Math.PI / 4.5, -Math.PI / 4.5, Math.PI * 0.78, -Math.PI * 0.78]], front: [[0]], rear: [[Math.PI]] }[from];
+      for (const set of rel) for (const s of shuffle(set.slice())) for (const dist of [190, 150, 240, 120]) {
+        const a = player.angle + s, x = player.x + Math.cos(a) * dist, y = player.y + Math.sin(a) * dist;
+        let ok = true;
+        for (let k = 0; k <= 10 && ok; k++) { const q = cellOf(x + (player.x - x) * k / 10, y + (player.y - y) * k / 10); if (!walkable(q.c, q.r)) ok = false; }
+        if (!ok) continue;
+        const b = spawnBot('speedster', 0) || devNearBots(1)[0];
+        if (!b) break;
+        b.x = x; b.y = y; b.angle = Math.atan2(player.y - y, player.x - x); b.dir = 1; b.state = 'drive';
+        b.temp = true; b.tempLeave = true; b.stun = 0; b.ghost = 0;
+        b.antic = { kind: 'ram', angle: b.angle, t: 0, phase: 1, dur: 2, cd: 0, atPlayer: true };
+        b.speed = 160;
+        addText(b.x, b.y - 30, pick(['MOVE!!', 'NO BRAKES!', 'LOOK OUT!']), '#fde047');
+        return true;
+      }
+      if (from === 'side' && !quiet) { DEV.armed = (DEV.armed || 0) + 1; devSay('T-BONE ARMED: IT HITS WHEN YOU REACH A CROSS AISLE', '#facc15'); return false; }
+      if (!quiet) devSay('NO CLEAR RUN-UP FROM THAT SIDE', '#94a3b8');
+      return false;
+    }
+    function devTakeHit() { const h = { x: player.x + Math.cos(player.angle) * 30, y: player.y + Math.sin(player.angle) * 30 }; player.invuln = 0; damagePlayer(25, h.x, h.y, 'IMPACT', true); }
+    function devSlick() {
+      game.oil.push({ x: player.x + Math.cos(player.angle) * 110, y: player.y + Math.sin(player.angle) * 110, r: 32, seed: Math.random() * 10 });
+      game.oilVer++; devSay('DRESSING SLICK AHEAD');
+    }
+    function devEvent(k) {
+      if (k === 'end') { for (const e of game.events) if (e.type === 'rush') for (const b of game.bots) if (b.temp) b.tempLeave = true; game.events = []; devSay('EVENTS ENDED'); return; }
+      game.events = game.events.filter(e => e.type !== k);
+      startEvent(k);
+    }
+    function devSup(on) {
+      const s = supervisor();
+      if (on) { if (s) { game.supT = Math.max(game.supT, 40); s.leaving = false; } else { DEV.noSup = false; game.supT = 0; } devSay('SUPERVISOR CALLED IN'); }
+      else { if (s) game.bots.splice(game.bots.indexOf(s), 1); game.sup = null; game.supT = DEV.noSup ? 1e9 : supAway(); devSay('SUPERVISOR SENT HOME'); }
+    }
+    function devSpawn(type, n = 1) { let k = 0; for (let i = 0; i < n; i++) if (spawnBot(type, 250)) k++; devSay(`+${k} ${type.toUpperCase()}`); }
+    function devClearBots() { game.bots = game.bots.filter(b => b.type === 'super'); sgRebuild(); devSay('ALL DRIVERS CLOCKED OUT'); }
+    function devShift(d) {
+      game.shift = clamp(game.shift + d, 1, 40);
+      if (d > 0) ensureBots(false);
+      else {
+        const mix = botMix();
+        for (const [type, n] of Object.entries(mix)) {
+          const list = game.bots.filter(b => b.type === type).sort((a, b) => Math.hypot(b.x - player.x, b.y - player.y) - Math.hypot(a.x - player.x, a.y - player.y));
+          for (let i = 0; i < list.length - n; i++) game.bots.splice(game.bots.indexOf(list[i]), 1);
+        }
+      }
+      for (const b of game.bots) if (b.type !== 'super') b.cruise = botCruise(b.type);
+      bumpHud(elShift); hudForce(); devSay(`TRAFFIC LEVEL: SHIFT ${pad(game.shift, 2)}`);
+    }
+    function devTeleport(where) {
+      let p;
+      if (where === 'dcvr') { p = navPoint(CONV_C0 + 2, 3); p = { x: p.x, y: p.y + 6, a: Math.PI }; }
+      else if (where === 'docks') { const d = pick(DOORS); const q = navPoint(d.c, 37); p = { x: q.x, y: q.y, a: -Math.PI / 2 }; }
+      else { for (let k = 0; k < 50 && !p; k++) { const t = pick(LANE_TILES); if (DYN[idx(t.c, t.r)]) continue; const q = navPoint(t.c, t.r); p = { x: q.x, y: q.y, a: -Math.PI / 2 }; } }
+      if (!p) return;
+      player.x = p.x; player.y = p.y; player.angle = p.a; player.vx = player.vy = player.speed = 0;
+      game.cam.init = false; camState.init = false; game.guide.key = '';
+    }
+    function devFillForks() {
+      if (game.mode !== 'putaway') { devSay('PUTAWAY MODE ONLY', '#94a3b8'); return; }
+      const ex = player.cargo.map(c => c.bin);
+      while (player.cargo.length < S.capacity) { const bin = chooseBin(ex); ex.push(bin); player.cargo.push({ bin, t0: game.time, par: bin.dist / 3.3 + 4 }); }
+      player.liftAnim = 0.35; game.guide.key = ''; devSay('FORKS LOADED');
+    }
+    // ---- queue ----
+    const DEV_ACTIONS = {
+      spill: ['SPILL', devSpill], clearspills: ['CLEAN SPILLS', devClearSpills], slick: ['DRESSING SLICK', devSlick],
+      burnout: ['BURNOUT', () => devAntic('burnout')], donut: ['DONUTS', () => devAntic('donut')], ram: ['RACK RAM', () => devAntic('ram')],
+      burnout3: ['BURNOUT x3', () => devAntic('burnout', 3)], ram3: ['RACK RAM x3', () => devAntic('ram', 3)], chaos: ['MASS CHAOS', devChaos],
+      tbone: ['T-BONE ME', () => devImpact('side')], headon: ['HEAD-ON', () => devImpact('front')], rearend: ['REAR-END ME', () => devImpact('rear')], hit: ['TAKE A HIT', devTakeHit],
+      rush: ['RUSH HOUR', () => devEvent('rush')], flicker: ['POWER FLICKER', () => devEvent('flicker')], spills: ['SPILL STORM', () => devEvent('spills')],
+      audit: ['AUDIT', () => devEvent('audit')], derby: ['DERBY', () => devEvent('derby')], endev: ['END EVENTS', () => devEvent('end')],
+      supon: ['CALL SUPERVISOR', () => devSup(true)], supoff: ['SEND HIM HOME', () => devSup(false)],
+      speedster: ['+3 SPEEDSTERS', () => devSpawn('speedster', 3)], cruiser: ['+3 CRUISERS', () => devSpawn('cruiser', 3)], wanderer: ['+3 WANDERERS', () => devSpawn('wanderer', 3)],
+      dawdler: ['+3 DAWDLERS', () => devSpawn('dawdler', 3)], putaway: ['+3 DCVR CREW', () => devSpawn('putaway', 3)], nobots: ['CLEAR DRIVERS', devClearBots],
+      shiftup: ['TRAFFIC +1 SHIFT', () => devShift(1)], shiftdn: ['TRAFFIC -1 SHIFT', () => devShift(-1)]
+    };
+    function devQueue(key) {
+      const [label, fn] = DEV_ACTIONS[key];
+      if (DEV.delay <= 0) { fn(); return; }
+      DEV.queue.push({ key, label, at: game.simT + DEV.delay });
+      devRender();
+    }
+    function devUpdate() {
+      if (!DEV.on) return;
+      let fired = false;
+      if (DEV.armed > 0 && (DEV.armT = (DEV.armT || 0) - 1) <= 0) { DEV.armT = 15; if (devImpact('side', true)) DEV.armed--; }
+      for (const b of game.bots) if (b.antic && b.antic.atPlayer && b.stun > 0) b.antic = null;   // it hit you: done ramming
+      for (let i = 0; i < DEV.queue.length; i++) {
+        const q = DEV.queue[i];
+        if (game.simT >= q.at) { DEV.queue.splice(i--, 1); DEV_ACTIONS[q.key][1](); fired = true; }
+      }
+      if (fired) devRender();
+    }
+    // ---- panel ----
+    const DEV_TOOLS = {
+      repair: ['REPAIR', () => { player.integrity = S.maxHP; devSay('CHASSIS REPAIRED'); }],
+      turbo: ['REFILL TURBO', () => { player.boost = 100; player.boostLocked = false; }],
+      fill: ['FILL FORKS', devFillForks], dump: ['EMPTY FORKS', () => { player.cargo = []; game.guide.key = ''; }],
+      tpdcvr: ['GO TO DCVR', () => devTeleport('dcvr')], tpdocks: ['GO TO D80', () => devTeleport('docks')], tprand: ['RANDOM AISLE', () => devTeleport('rand')],
+      clearq: ['CLEAR QUEUE', () => { DEV.queue = []; DEV.armed = 0; }], menu: ['EXIT DEV MODE', () => { player.x = -9999; player.y = -9999; player.cargo = []; game.order = null; setState('START'); }]
+    };
+    const DEV_TOGGLES = {
+      god: 'GOD MODE', freeze: 'FREEZE TRAFFIC', noSup: 'NO SUPERVISOR', calm: 'NO RANDOM CHAOS', maxUp: 'MAX UPGRADES'
+    };
+    function devToggle(k) {
+      DEV[k] = !DEV[k];
+      if (k === 'maxUp') { S = stats(); player.integrity = Math.min(S.maxHP, Math.max(player.integrity, DEV.maxUp ? S.maxHP : 0)); }
+      if (k === 'noSup') { if (DEV.noSup) devSup(false); else game.supT = supAway(); }
+      devRender();
+    }
+    function devRender() {
+      const el = $('dev-panel'), keepScroll = el.scrollTop;
+      const btn = (attr, key, label, cls = '') => `<button class="dev-b ${cls}" data-${attr}="${key}">${label}</button>`;
+      const grp = (title, map, attr) => `<div class="dev-h">${title}</div><div class="dev-g">${Object.entries(map).map(([k, v]) => btn(attr, k, Array.isArray(v) ? v[0] : v, attr === 'tog' && DEV[k] ? 'on' : '')).join('')}</div>`;
+      const pickA = keys => Object.fromEntries(keys.map(k => [k, DEV_ACTIONS[k]]));
+      el.innerHTML = `<div class="dev-title">DEV MODE <span>\` HIDES</span></div>
+        <div class="dev-h">QUEUE DELAY</div><div class="dev-g four">${[0, 2, 5, 10].map(d => `<button class="dev-b ${DEV.delay === d ? 'on' : ''}" data-delay="${d}">${d ? d + 's' : 'NOW'}</button>`).join('')}</div>
+        <div class="dev-h">TIME</div><div class="dev-g four">${[0.25, 0.5, 1, 2].map(d => `<button class="dev-b ${DEV.scale === d ? 'on' : ''}" data-scale="${d}">${d}x</button>`).join('')}</div>
+        <div class="dev-h">QUEUED${DEV.armed ? ` • ${DEV.armed} T-BONE ARMED` : ''}</div><div id="dev-q">${DEV.queue.length ? DEV.queue.map((q, i) => `<div class="dev-qi"><span>${q.label}</span><b data-qt="${i}">${Math.max(0, q.at - game.simT).toFixed(1)}s</b><button class="dev-x" data-qx="${i}">x</button></div>`).join('') : '<div class="dev-dim">NOTHING QUEUED. PICK A DELAY, THEN STACK ACTIONS.</div>'}</div>
+        ${grp('HAZARDS [1]', pickA(['spill', 'clearspills', 'slick']), 'act')}
+        ${grp('DRIVER ANTICS [2 3 4]', pickA(['burnout', 'donut', 'ram', 'burnout3', 'ram3', 'chaos']), 'act')}
+        ${grp('IMPACTS [5]', pickA(['tbone', 'headon', 'rearend', 'hit']), 'act')}
+        ${grp('EVENTS [6]', pickA(['rush', 'flicker', 'spills', 'audit', 'derby', 'endev']), 'act')}
+        ${grp('SUPERVISOR', pickA(['supon', 'supoff']), 'act')}
+        ${grp('TRAFFIC', pickA(['speedster', 'cruiser', 'wanderer', 'dawdler', 'putaway', 'nobots', 'shiftup', 'shiftdn']), 'act')}
+        ${grp('TOGGLES', DEV_TOGGLES, 'tog')}
+        ${grp('TOOLS', DEV_TOOLS, 'tool')}
+        <div class="dev-h">LIVE</div><div id="dev-info" class="dev-dim"></div>`;
+      el.scrollTop = keepScroll;
+    }
+    function devClick(e) {
+      const b = e.target.closest('button'); if (!b) return;
+      b.blur(); audio.init();
+      const d = b.dataset;
+      if (d.act) devQueue(d.act);
+      else if (d.tool) DEV_TOOLS[d.tool][1]();
+      else if (d.tog) devToggle(d.tog);
+      else if (d.delay !== undefined) DEV.delay = +d.delay;
+      else if (d.scale !== undefined) DEV.scale = +d.scale;
+      else if (d.qx !== undefined) DEV.queue.splice(+d.qx, 1);
+      if (DEV.on) devRender();
+    }
+    let _devInfoT = 0, _devFps = 60;
+    function devTick(dt) {
+      const show = DEV.on && game.state === 'PLAYING';
+      $('dev-panel').style.display = show && DEV.panel ? '' : 'none';
+      $('dev-tag').style.display = show && !DEV.panel ? '' : 'none';
+      if (!show) return;
+      game.timer = 999;
+      _devFps += ((dt > 0 ? 1 / dt : 60) - _devFps) * 0.05;
+      if ((_devInfoT -= dt) > 0) return;
+      _devInfoT = 0.25;
+      document.querySelectorAll('#dev-q b[data-qt]').forEach(el => { const q = DEV.queue[+el.dataset.qt]; if (q) el.textContent = Math.max(0, q.at - game.simT).toFixed(1) + 's'; });
+      const info = $('dev-info'); if (!info) return;
+      const st = {}; for (const b of game.bots) if (b.antic) st[b.antic.kind] = (st[b.antic.kind] || 0) + 1;
+      const pc = playerCell(), s = supervisor();
+      info.innerHTML = `FPS ${_devFps.toFixed(0)} • DRIVERS ${game.bots.length}<br>SPILLS ${game.spills.length} • SLICKS ${game.oil.length}<br>EVENTS ${game.events.map(e => e.type.toUpperCase()).join(', ') || 'NONE'}<br>ANTICS ${Object.entries(st).map(([k, v]) => k + ' ' + v).join(', ') || 'NONE'}<br>BOSS ${s ? (s.leaving ? 'LEAVING' : 'ON FLOOR') : 'AWAY ' + (DEV.noSup ? '∞' : Math.max(0, game.supT).toFixed(0) + 's')}<br>YOU ${Math.round(Math.hypot(player.vx, player.vy))} PX/S @ ${pc.c},${pc.r} • HP ${Math.round(player.integrity)}`;
+    }
+    function devKey(e) {
+      if (!DEV.on || game.state !== 'PLAYING') return false;
+      const map = { Digit1: 'spill', Digit2: 'burnout', Digit3: 'donut', Digit4: 'ram', Digit5: 'tbone' };
+      if (e.code === 'Backquote') { DEV.panel = !DEV.panel; if (DEV.panel) devRender(); return true; }
+      if (map[e.code] && !e.repeat) { devQueue(map[e.code]); return true; }
+      if (e.code === 'Digit6' && !e.repeat) { devQueue(pick(['rush', 'flicker', 'spills', 'audit', 'derby'])); return true; }
+      return false;
+    }
+
+    // =========================================================================
+    // 9g. TRAFFIC-AWARE ROUTING — drivers read the floor and go around jams
+    // =========================================================================
+    // HEAT: live congestion per tile. Stalled / parked / showboating drivers heat their tile hard,
+    // moving ones a little, and every freshly planned route reserves a bit along its first stretch,
+    // so the next planner sees where everyone is already headed and spreads out.
+    const NT = COLS * ROWS;
+    const RT = { flow: 1, mouth: 1, early: 1, keep: 21, arrive: 18, slide: 45 };   // tuning switches (tests flip these)
+    const HEAT = new Float32Array(NT);
+    const AS_G = new Float32Array(NT), AS_PREV = new Int32Array(NT), AS_STAMP = new Uint32Array(NT), AS_DONE = new Uint32Array(NT);
+    const HP_N = new Int32Array(NT * 4), HP_F = new Float32Array(NT * 4);
+    let asStamp = 0, heatT = 0;
+    const heatAdd = (c, r, v) => { if (c >= 0 && r >= 0 && c < COLS && r < ROWS) HEAT[idx(c, r)] = Math.min(20, HEAT[idx(c, r)] + v); };
+    function updateHeat(dt) {
+      heatT += dt;
+      if (heatT < 0.2) return;
+      const k = Math.pow(0.9, heatT / 0.2);
+      heatT = 0;
+      for (let i = 0; i < NT; i++) if (HEAT[i] > 0.01) HEAT[i] *= k; else HEAT[i] = 0;
+      for (const b of game.bots) {
+        if (b.type === 'super' || b.ghost > 0) continue;
+        const c = cellOf(b.x, b.y);
+        let v = 0.15;
+        if (b.antic || b.stun > 0) v = 1.6;
+        else if (b.state === 'park' || b.state === 'insert' || b.state === 'align' || b.state === 'extract') v = 0.7;
+        else if (b.state === 'idle' || (b.state === 'drive' && b.speed < 12)) v = 1.0;
+        heatAdd(c.c, c.r, v);
+        if (v >= 1) {   // a stopped truck also chokes the tile in front of it
+          const tv = botTravelDir(b);
+          heatAdd(c.c + Math.round(tv.x), c.r + Math.round(tv.y), v * 0.5);
+        }
+      }
+      if (game.state === 'PLAYING' && Math.hypot(player.vx, player.vy) < 40 && player.x > 0) { const pc = playerCell(); heatAdd(pc.c, pc.r, 0.8); }
+    }
+    // per-driver taste: a small, changing bias for or against each aisle and cross aisle
+    function routeTaste(b, c, r) {
+      const key = isCrossRow(r) ? 1000 + r : isLaneCol(c) ? LANE_OF_COL[c] : -1;
+      if (key < 0) return 0;
+      let h = (Math.imul(key + 1, 0x9e3779b1) ^ Math.imul((b.id | 0) + 7, 0x85ebca6b) ^ (b.taste | 0)) >>> 0;
+      h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d) >>> 0;
+      return ((h >>> 8) / 16777216) * 0.45;
+    }
+    // A* over the walkable grid, cost = distance + congestion + taste (+ extra cost on an avoid set)
+    function routePath(b, sc, sr, gc, gr, avoid) {
+      asStamp++;
+      const s = idx(sc, sr), g = idx(gc, gr);
+      let n = 0;
+      const push = (i, f) => {   // binary heap on f
+        let k = n++; HP_N[k] = i; HP_F[k] = f;
+        while (k > 0) { const p = (k - 1) >> 1; if (HP_F[p] <= HP_F[k]) break; const tn = HP_N[p], tf = HP_F[p]; HP_N[p] = HP_N[k]; HP_F[p] = HP_F[k]; HP_N[k] = tn; HP_F[k] = tf; k = p; }
+      };
+      const pop = () => {
+        const top = HP_N[0]; n--;
+        if (n > 0) {
+          HP_N[0] = HP_N[n]; HP_F[0] = HP_F[n];
+          let k = 0;
+          for (;;) { const l = 2 * k + 1, r = l + 1; let m = k; if (l < n && HP_F[l] < HP_F[m]) m = l; if (r < n && HP_F[r] < HP_F[m]) m = r; if (m === k) break; const tn = HP_N[m], tf = HP_F[m]; HP_N[m] = HP_N[k]; HP_F[m] = HP_F[k]; HP_N[k] = tn; HP_F[k] = tf; k = m; }
+        }
+        return top;
+      };
+      AS_G[s] = 0; AS_PREV[s] = -1; AS_STAMP[s] = asStamp;
+      push(s, Math.abs(sc - gc) + Math.abs(sr - gr));
+      const heatW = b.type === 'super' ? 0.15 : b.type === 'speedster' ? 0.45 : b.type === 'dawdler' ? 0.8 : 0.6;
+      while (n > 0) {
+        const i = pop();
+        if (AS_DONE[i] === asStamp) continue;
+        AS_DONE[i] = asStamp;
+        if (i === g) break;
+        const c = i % COLS, r = (i / COLS) | 0;
+        for (let k = 0; k < 4; k++) {
+          const nc = c + (k === 0 ? 1 : k === 1 ? -1 : 0), nr = r + (k === 2 ? 1 : k === 3 ? -1 : 0);
+          if (!walkable(nc, nr)) continue;
+          const j = idx(nc, nr);
+          if (DYN[j] || AS_DONE[j] === asStamp) continue;
+          let cost = 1 + heatW * Math.min(10, HEAT[j]) + routeTaste(b, nc, nr) + (b.type === 'super' ? 0 : counterFlowCost(j, k));
+          if (avoid && avoid.has(j)) cost += 14;
+          const ng = AS_G[i] + cost;
+          if (AS_STAMP[j] === asStamp && ng >= AS_G[j]) continue;
+          AS_STAMP[j] = asStamp; AS_G[j] = ng; AS_PREV[j] = i;
+          push(j, ng + Math.abs(nc - gc) + Math.abs(nr - gr));
+        }
+      }
+      if (AS_DONE[g] !== asStamp) return null;
+      const out = [];
+      for (let i = g; i !== -1; i = AS_PREV[i]) out.push(i);
+      return out.reverse();
+    }
+    // reserve the first stretch of a new route so later planners see it coming
+    function reserveRoute(path) { for (let k = 1; k < Math.min(path.length, 22); k++) HEAT[path[k]] = Math.min(20, HEAT[path[k]] + 0.35 * (1 - k / 24)); }
+    // how congested is the road ahead (next ~12 tiles of the current route)?
+    function heatAhead(b) {
+      if (!b.pts) return 0;
+      let h = 0;
+      for (let i = b.pi + 1; i < Math.min(b.pts.length - 1, b.pi + 13); i++) { const c = cellOf(b.pts[i].x, b.pts[i].y); h += HEAT[idx(c.c, c.r)]; }
+      return h;
+    }
+    // stuck behind someone: mark the blockage hot (for everyone) and look for another way round
+    function rerouteAround(b, o) {
+      if (!b.goal || (b.rerouteCd || 0) > 0) return false;
+      b.rerouteCd = 3 + Math.random() * 2;
+      const avoid = new Set();
+      const oc = cellOf(o.x, o.y);
+      for (let dc = -1; dc <= 1; dc++) for (let dr = -1; dr <= 1; dr++) if (walkable(oc.c + dc, oc.r + dr)) { avoid.add(idx(oc.c + dc, oc.r + dr)); heatAdd(oc.c + dc, oc.r + dr, dc === 0 && dr === 0 ? 3 : 1); }
+      const old = b.pts ? b.pts.length - b.pi : 0;
+      b.taste = (Math.random() * 1e9) | 0;
+      if (!setBotGoal(b, b.goal.c, b.goal.r, b.park, avoid)) return false;
+      b.rerouted = (b.rerouted || 0) + 1;
+      if (b.pts.length > old + 6 && Math.random() < 0.35) addText(b.x, b.y - 26, pick(['FINE, I\'LL GO AROUND', 'UGH, TRAFFIC', 'SHORTCUT!', 'NOPE']), '#fde047');
+      return true;
+    }
+
+    // ---- directional reservations: who is about to drive which way through each tile ----
+    // FLOW[tile*4 + d], d: 0 east, 1 west, 2 south, 3 north (opposite = d ^ 1)
+    const FLOW = new Float32Array(NT * 4);
+    let flowT = 0;
+    const stepDir = (i, j) => { const d = j - i; return d === 1 ? 0 : d === -1 ? 1 : d === COLS ? 2 : d === -COLS ? 3 : -1; };
+    // walk a driver's upcoming route tile by tile: fn(tileIdx, dir, weight)
+    function walkRoute(b, fn, maxTiles = 24) {
+      if (!b.pts || b.pi >= b.pts.length) return;
+      const c0 = cellOf(b.x, b.y);
+      let prev = idx(c0.c, c0.r), n = 0;
+      for (let k = b.pi; k < b.pts.length && n < maxTiles; k++) {
+        const c = cellOf(b.pts[k].x, b.pts[k].y), j = idx(c.c, c.r);
+        if (j === prev) continue;
+        const d = stepDir(prev, j);
+        if (d >= 0) { fn(j, d, 1 - 0.6 * (n / maxTiles)); n++; }
+        prev = j;
+      }
+    }
+    function flowAdd(b, sign) { walkRoute(b, (j, d, w) => { FLOW[j * 4 + d] = Math.max(0, FLOW[j * 4 + d] + sign * w); }); }
+    function rebuildFlow(dt) {
+      flowT += dt;
+      if (flowT < 0.25) return;
+      flowT = 0;
+      FLOW.fill(0);
+      for (const b of game.bots) if (b.type !== 'super' && b.state === 'drive' && !b.antic) flowAdd(b, 1);
+    }
+    // extra cost of stepping into tile j heading d, given everyone else's bookings
+    function counterFlowCost(j, d) {
+      const opp = FLOW[j * 4 + (d ^ 1)];
+      if (opp <= 0.05) return 0;
+      const c = j % COLS, r = (j / COLS) | 0;
+      return RT.flow * (isLaneTile(c, r) ? Math.min(3, opp) * 3.2 : Math.min(3, opp) * 0.35);
+    }
+    // the lane segment (aisle + north/south half) a tile belongs to
+    const segOf = (c, r) => (isLaneTile(c, r) ? LANE_OF_COL[c] * 2 + (laneHalf(r) === 'N' ? 0 : 1) : -1);
+    // the next lane segment on my route that I'm not in yet: { seg, dir: +1 south / -1 north, k: point index, dist }
+    function nextLaneEntry(b, look = 5) {
+      if (!b.pts) return null;
+      const me = cellOf(b.x, b.y), mySeg = segOf(me.c, me.r);
+      for (let k = b.pi; k < Math.min(b.pts.length - 1, b.pi + look); k++) {
+        const p = b.pts[k], q = b.pts[k + 1], c = cellOf(p.x, p.y), s = segOf(c.c, c.r);
+        if (s < 0 || s === mySeg) continue;
+        const dy = q.y - p.y;
+        if (Math.abs(dy) < 1) continue;
+        return { seg: s, dir: Math.sign(dy), k, x: p.x, y: p.y, dist: Math.hypot(p.x - b.x, p.y - b.y) };
+      }
+      return null;
+    }
+    // is somebody already inside that lane segment, coming my way?
+    function oncomingIn(seg, dir, me) {
+      for (const o of game.bots) {
+        if (o === me || o.type === 'super' || o.ghost > 0) continue;
+        const c = cellOf(o.x, o.y);
+        if (segOf(c.c, c.r) !== seg) continue;
+        if (o.state !== 'drive' && o.state !== 'idle') continue;     // parked at a bin: that's beside the lane, not in it
+        const tv = botTravelDir(o);
+        if (tv.y * dir < -0.5 && (o.speed > 5 || o.state === 'idle' || o.wait > 0)) return o;
+      }
+      return null;
+    }
+    // planning: drop my own bookings first so I don't dodge myself
+    function replanWithFlow(b) { return setBotGoal(b, b.goal.c, b.goal.r, b.park, null); }   // setBotGoal swaps my bookings itself
+    // before committing to the next lane: has somebody booked it head-on since I planned?
+    function laneConflictAhead(b) {
+      const e = nextLaneEntry(b, 8);
+      if (!e) return false;
+      let opp = 0;
+      walkRoute(b, (j, d) => { const c = j % COLS, r = (j / COLS) | 0; if (segOf(c, r) === e.seg) { opp += FLOW[j * 4 + (d ^ 1)]; } }, 30);
+      return opp > 1.2;
+    }
+
+    // somebody coming the other way down my lane, close ahead and roughly in line? (wide lateral window)
+    function oncomingAhead(b, range) {
+      const c = cellOf(b.x, b.y);
+      if (!isLaneTile(c.c, c.r)) return null;
+      const tv = botTravelDir(b), L = LANE_OF_COL[c.c];
+      let best = null, bd = range;
+      sgEach(b.x, b.y, range + 20, o => {
+        if (o === b || o.type === 'super' || o.state !== 'drive') return;
+        const oc = cellOf(o.x, o.y);
+        if (!isLaneTile(oc.c, oc.r) || LANE_OF_COL[oc.c] !== L) return;
+        const along = (o.x - b.x) * tv.x + (o.y - b.y) * tv.y;
+        if (along <= 0 || along > bd) return;
+        const ov = botTravelDir(o);
+        if (ov.x * tv.x + ov.y * tv.y > -0.5) return;
+        best = o; bd = along;
+      });
+      return best;
     }
 
     // =========================================================================
@@ -1859,6 +2491,7 @@
     }
 
     function startNewGame(mode) {
+      if (DEV.on && !DEV.starting) devExit();
       audio.init();
       if (mode) game.mode = mode;
       save.mode = game.mode; persist();
@@ -1868,7 +2501,7 @@
       Object.assign(game, {
         time: 0, pending: 0, earned: 0, fines: 0, shift: 1, deliveries: 0, combo: 1, peakCombo: 1, timer: 75, countdown: 1.6,
         shake: 0, flash: 0, banner: null, lowTickSec: -1, hornCd: 0, beepCd: 0, backupCd: 0, writeCd: 0,
-        particles: [], texts: [], belt: [], beltSpawn: 0, spills: [], spillT: rand(20, 35), order: null, sup: null, supT: rand(18, 35), events: [], eventT: rand(40, 70), runEarned: 0, shiftDelivered: 0, rate: 0
+        particles: [], texts: [], belt: [], beltSpawn: 0, spills: [], spillT: rand(20, 35), order: null, sup: null, supT: rand(45, 65), events: [], eventT: rand(40, 70), runEarned: 0, shiftDelivered: 0, rate: 0
       });
       game.guide.key = '';
       Object.assign(player, {
@@ -1935,7 +2568,7 @@
       const exclude = player.cargo.map(c => c.bin);
       for (let i = 0; i < n; i++) {
         const bin = chooseBin(exclude); exclude.push(bin);
-        player.cargo.push({ bin, t0: game.time, par: bin.dist / 3.3 + 4 });
+        player.cargo.push({ bin, t0: game.time, par: bin.dist / 3.3 + 4, prod: game.belt[0] ? game.belt[0].prod : undefined });
         game.belt.shift();
       }
       player.liftAnim = 0.35; audio.pickup(n);
@@ -2093,6 +2726,11 @@
 
     function triggerGameOver(reason) {
       if (game.state !== 'PLAYING') return;
+      if (DEV.on) {
+        if (reason === 'QUIT') { player.x = -9999; player.y = -9999; player.cargo = []; game.order = null; setState('START'); }
+        else { player.integrity = S.maxHP; player.invuln = 1.5; addText(player.x, player.y - 50, 'WRECKED! (DEV: FIXED UP)', '#22d3ee', true); }
+        return;
+      }
       endDrift();
       audio.gameOver();
       game.gameOverAt = performance.now();
@@ -2139,7 +2777,7 @@
     function botMix() {
       // no ceiling on the shift number: traffic keeps growing (up to the engine's BOT_CAP) and gets wilder
       const s = game.shift - 1, extra = Math.round(s * 2.5);
-      const mix = { cruiser: 5, putaway: 5, loader: 4, speedster: 1, dawdler: 1, wanderer: 1 };
+      const mix = { cruiser: 5, putaway: 8, loader: 4, speedster: 1, dawdler: 1, wanderer: 1 };
       const order = s < 6 ? ['speedster', 'putaway', 'wanderer', 'cruiser', 'dawdler', 'loader'] : ['speedster', 'wanderer', 'speedster', 'cruiser', 'putaway', 'speedster', 'wanderer', 'dawdler'];
       for (let i = 0; i < extra; i++) mix[order[i % order.length]]++;
       mix.loader = Math.min(mix.loader, DOORS.length - 2);
@@ -2163,6 +2801,7 @@
         let t;
         if (type === 'loader') t = { c: pick(DOORS).c + (Math.random() < 0.5 ? 0 : 1), r: pick(D80_ROWS) };
         else if (type === 'cruiser' || type === 'super') t = pick(CROSS_TILES);
+        else if (type === 'putaway' && Math.random() < 0.5) t = { c: CONV_C0 + 3 + Math.floor(Math.random() * (CONV_C1 - CONV_C0 - 2)), r: pick(D20_ROWS) };
         else t = pick(LANE_TILES);
         if (!walkable(t.c, t.r) || DYN[idx(t.c, t.r)] || t.r >= R_STAGE) continue;
         const p = navPoint(t.c, t.r);
@@ -2195,19 +2834,23 @@
       return b;
     }
 
-    function setBotGoal(b, gc, gr, park) {
+    function setBotGoal(b, gc, gr, park, avoid) {
       const sc = cellOf(b.x, b.y);
       const start = nearestWalkable(sc.c, sc.r, true) || nearestWalkable(sc.c, sc.r, false);
       if (!start) return false;
-      const res = bfs(start.c, start.r, true);
-      const path = tracePath(res, start.c, start.r, gc, gr);
+      if (!avoid && !(b.goal && b.goal.c === gc && b.goal.r === gr)) b.taste = (Math.random() * 1e9) | 0;   // fresh errand, fresh taste
+      flowAdd(b, -1);
+      const path = routePath(b, start.c, start.r, gc, gr, avoid);
       if (!path) return false;
+      reserveRoute(path);
       b.pts = pathPoints(path);
       b.pi = b.pts.length > 1 ? 1 : 0;
       b.goal = { c: gc, r: gr };
       b.park = park || null;
       b.state = 'drive';
       b.wait = 0;
+      b.routeCheck = rand(2, 4);
+      flowAdd(b, 1);
       return true;
     }
     function replanBot(b) {
@@ -2283,6 +2926,24 @@
           }
           b.reverseLeg = Math.random() < 0.3;
           b.carrying = Math.random() < 0.5;
+          break;
+        }
+        case 'putaway': {
+          // DCVR crew: pull a pallet off the belt line (upstream of your pickup spot), put it away, come back
+          if (!b.carrying && Math.random() < 0.85) {
+            for (let k = 0; k < 12 && !ok; k++) {
+              const c = CONV_C0 + 3 + Math.floor(Math.random() * (CONV_C1 - CONV_C0 - 2)), r = R_D10 + 1;
+              if (game.bots.some(o => o !== b && o.park && o.park.target && o.park.target.belt && Math.abs(o.park.target.c - c) < 2)) continue;
+              const tgt = { face: { x: (c + 0.5) * TILE, y: r * TILE }, nx: 0, ny: -1, belt: true, c, r };
+              const pp = parkPose(tgt);
+              if (inKeepout(pp.x, pp.y, ko)) continue;
+              ok = setBotGoal(b, c, r, pp);
+            }
+            if (ok) break;
+          }
+          const bin = freeBin();
+          if (bin) ok = setBotGoal(b, bin.fc, bin.fr, parkPose(bin));
+          b.carrying = true;
           break;
         }
         default: {
@@ -2432,14 +3093,16 @@
       let sx = w.x - prev.x, sy = w.y - prev.y;
       const sl = Math.hypot(sx, sy) || 1; sx /= sl; sy /= sl;
       // keep right; the passing side is only used when it's clear
-      const laneOff = w.wide ? 30 : 17;
+      const laneOff = w.wide ? 30 : RT.keep;
+      if (RT.early && !w.wide && b.type !== 'super' && (b.passT = (b.passT || 0) - dt) <= 0) { b.passT = 0.15; const oc = oncomingAhead(b, 170); b.oncoming = oc; if (oc) { b.squeeze = Math.max(b.squeeze, 0.9); b.dodge = 0; } }
       const side = b.dodge > 0 ? -1 : 1;
       if (b.dodge > 0) b.dodge -= dt;
       if (b.squeeze > 0) b.squeeze -= dt;
       const weave = w.wide ? Math.sin(b.weaveT * (1.3 + (b.id % 5) * 0.2)) * T.weave * (eventOn('derby') ? 3 : 1) : 0;
-      const lim = w.wide ? 46 : 22;
+      const lim = w.wide ? 46 : 24;
       const off = last ? 0 : b.squeeze > 0 ? lim : clamp(laneOff * side + weave, -lim, lim);
-      const ax = w.x - sy * off, ay = w.y + sx * off;
+      let ax = w.x - sy * off, ay = w.y + sx * off;
+      if (last && !w.wide && b.park && b.park.target && b.park.target.nx !== undefined && !b.park.target.belt && !b.park.target.trailer && RT.arrive) { ax += b.park.target.nx * RT.arrive; ay += b.park.target.ny * RT.arrive; }
       const dist = Math.hypot(ax - b.x, ay - b.y);
 
       if (last && dist < 10) {
@@ -2461,7 +3124,8 @@
       b.angle = wrapAngle(b.angle + clamp(err, -T.turn * dt, T.turn * dt));
 
       let target = b.cruise * (b.dir < 0 ? 0.6 : 1) * (eventOn('rush') && b.type !== 'super' ? 1.35 : 1);
-      if (Math.abs(err) > 1.1) target = 0;
+      if (Math.abs(err) > 1.9) target = 0;
+      else if (Math.abs(err) > 1.1) target = Math.min(target, 34);
       else target *= 1 - Math.min(0.7, Math.abs(err) / 1.4);
       if (last) target = Math.min(target, 30 + dist * 2.2);
 
@@ -2518,11 +3182,37 @@
               if (sc.lat < 0) { b.squeeze = 0.6; b.dodge = 0; } else { b.dodge = 0.6; b.squeeze = 0; }
               target = Math.max(target, 22);
             }
+            if (b.wait > 1.1 && stalled && !headOn && rerouteAround(b, o)) return;
             if (b.wait > 4) { b.wait = 0; replanBot(b); }
           }
         } else b.blocker = null;
       } else { b.wait = Math.max(0, b.wait - dt); b.blocker = null; }
 
+      if (b.rerouteCd > 0) b.rerouteCd -= dt;
+      b.flowCheck = (b.flowCheck === undefined ? rand(0.3, 0.8) : b.flowCheck) - dt;
+      if (b.flowCheck <= 0 && b.goal && b.type !== 'super') {
+        b.flowCheck = rand(0.55, 0.85);
+        if ((b.conflictCd || 0) <= 0 && laneConflictAhead(b)) { b.conflictCd = 2.5; replanWithFlow(b); }
+      }
+      if (b.conflictCd > 0) b.conflictCd -= dt;
+      if (b.type !== 'super' && RT.mouth) {
+        const e = nextLaneEntry(b, 4);
+        if (e && e.dist < 150) {
+          if (b.laneEnt !== e.seg) { b.laneEnt = e.seg; b.mouthWait = 0; b.barge = b.type === 'speedster' ? Math.random() < 0.45 : eventOn('derby') ? Math.random() < 0.6 : Math.random() < 0.08; }
+          const o = !b.barge && b.mouthWait < 4 ? oncomingIn(e.seg, e.dir, b) : null;
+          if (o) {
+            b.mouthWait += dt;
+            b.blocker = null;
+            if (e.dist < 105) target = 0; else target = Math.min(target, (e.dist - 105) * 3);
+            if (b.mouthWait > 1.2 && (b.conflictCd || 0) <= 0) { b.conflictCd = 2.5; replanWithFlow(b); }
+          }
+        } else if (!e) b.laneEnt = -1;
+      }
+      b.routeCheck = (b.routeCheck === undefined ? rand(2, 4) : b.routeCheck) - dt;
+      if (b.routeCheck <= 0) {
+        b.routeCheck = rand(2.5, 4.5);
+        if (b.goal && b.type !== 'super' && b.pts && b.pts.length - b.pi > 6 && heatAhead(b) > 7) setBotGoal(b, b.goal.c, b.goal.r, b.park, null);
+      }
       // random stops: only in quiet lane interiors, never at lane mouths, never in your way
       b.idleCheck -= dt;
       if (b.idleCheck <= 0) {
@@ -2536,11 +3226,18 @@
       }
       if (b.type === 'speedster' && Math.random() < dt * 0.12 && !w.wide) { b.speed *= 0.4; }
       b.anticT = (b.anticT === undefined ? rand(6, 30) : b.anticT) - dt;
-      if (b.anticT <= 0) { b.anticT = rand(14, 40) / (1 + 0.04 * (game.shift - 1)); if (startAntic(b, cell, ko)) return; }
+      if (b.anticT <= 0 && !(DEV.on && DEV.calm)) { b.anticT = rand(14, 40) / (1 + 0.04 * (game.shift - 1)); if (startAntic(b, cell, ko)) return; }
 
       if (b.speed < target) b.speed = Math.min(target, b.speed + T.accel * dt);
       else b.speed = Math.max(target, b.speed - T.accel * 2.2 * dt);
       moveBot(b, dt);
+      if (RT.slide && b.oncoming && !w.wide && b.speed < 60) {
+        const tv = botTravelDir(b), lc = cellOf(b.x, b.y);
+        if (Math.abs(tv.y) > 0.8 && isLaneTile(lc.c, lc.r)) {
+          const want = laneCX(lc.c) - Math.sign(tv.y) * (RT.keep + 2), dx = want - b.x;
+          if (Math.abs(dx) > 1.5) { b.x += Math.sign(dx) * Math.min(Math.abs(dx), RT.slide * dt); resolveStatic(b, B_BODY, null); }
+        }
+      }
 
       if (b.dir < 0 && b.speed > 5 && visible && game.state === 'PLAYING' && game.backupCd <= 0) { audio.backupBeep(); game.backupCd = 0.55; }
     }
@@ -2572,6 +3269,7 @@
         });
       }
       for (const b of _touched) resolveStatic(b, B_BODY, null);
+      for (const b of game.bots) if (b._a !== b.angle) { if (!_touched.has(b)) resolveStatic(b, B_BODY, null); b._a = b.angle; }   // turning in place swings corners into racks
     }
 
     // you vs drivers: they're lighter and get shoved; hard hits hurt you both
@@ -2628,15 +3326,18 @@
           if (game.countdown <= 0) { audio.go(); showBanner('GO!', game.mode === 'loading' ? 'PICK THE PALLETS ON YOUR LIST' : 'DRIVE INTO THE GREEN DCVR SLOT', '#34e07f', 1.2); }
         } else {
           game.time += dt;
-          game.timer -= dt;
+          if (!DEV.on) game.timer -= dt;
+          else devUpdate();
           if (game.timer < 10 && game.timer > 0) { const s = Math.ceil(game.timer); if (s !== game.lowTickSec) { game.lowTickSec = s; audio.tick(); } }
-          if (game.timer <= 0) { game.timer = 0; endShift(); }
+          if (game.timer <= 0 && !DEV.on) { game.timer = 0; endShift(); }
         }
       }
       beltStep(dt);
       sgRebuild();
       if (game.state === 'PLAYING') updatePlayer(dt);
       else audio.stopEngine();
+      updateHeat(dt);
+      rebuildFlow(dt);
       updateSupervisor(dt);
       updateSpills(dt);
       updateEvents(dt);
@@ -2644,6 +3345,7 @@
       const vr = viewRect(80), far = viewRect(700);
       for (let i = 0; i < game.bots.length; i++) {
         const b = game.bots[i];
+        if (DEV.on && DEV.freeze && !(b.antic && b.antic.atPlayer)) continue;
         // level of detail: drivers far off-screen think at half rate
         if (!inView(b.x, b.y, far)) { b.lod += dt; if (b.lod < 1 / 30) continue; updateBot(b, b.lod, ko, vr); b.lod = 0; }
         else updateBot(b, dt, ko, vr);
@@ -2821,7 +3523,7 @@
       setHud(elDeliveries, 'del', `${game.shiftDelivered || 0}/${game.rate || 0}`);
       setHud(elDeliveries, 'delc', (game.shiftDelivered || 0) >= (game.rate || 1) ? '#34e07f' : game.timer < 30 ? '#ff4d5e' : '#ffd84d', 'color');
       setHud(elCombo, 'combo', 'x' + game.combo.toFixed(2));
-      setHud(elTimer, 'timer', Math.max(0, game.timer).toFixed(1) + 's');
+      setHud(elTimer, 'timer', DEV.on ? 'DEV' : Math.max(0, game.timer).toFixed(1) + 's');
       const low = game.state === 'PLAYING' && game.timer <= 10;
       if (hudCache.low !== low) { hudCache.low = low; elTimer.classList.toggle('timer-low', low); }
       const hp = Math.round(player.integrity / S.maxHP * 100);
@@ -2881,6 +3583,7 @@
       document.querySelectorAll('.mode-card').forEach(c => c.classList.toggle('selected', c.dataset.mode === game.mode));
     }
     function setState(s) {
+      if (s === 'START' && DEV.on) devExit();
       game.state = s;
       startScreen.classList.toggle('hidden', s !== 'START');
       pauseScreen.classList.toggle('hidden', s !== 'PAUSED');
@@ -3034,7 +3737,7 @@
         o.group.add(new THREE.Mesh(GEO.bot[b.type], MAT.vc));
         o.forks = new THREE.Group();
         o.forks.add(new THREE.Mesh(GEO.botForks, MAT.vc));
-        o.cargo = new THREE.Mesh(GEO.cargo, b.type === 'loader' ? MAT.cargoWrap : MAT.cargoBot); o.cargo.position.set(16, 2, 0);
+        o.cargo = new THREE.Mesh(GEO.cargo, MAT.prod[hashProd(b.id || 7)]); o.cargo.position.set(16, 2, 0);
         o.forks.add(o.cargo); o.group.add(o.forks);
         o.beacon = new THREE.Mesh(GEO.beacon, ps1Mat({ emissive: 1 })); o.beacon.position.set(-13, 58, 0); o.group.add(o.beacon);
         o.spot = new THREE.Mesh(GEO.plane, MAT.spot); o.spot.scale.set(26, 1, 18); o.spot.position.y = 0.8; o.group.add(o.spot);
@@ -3061,7 +3764,8 @@
           o.ring.material.uniforms.opacity.value = 0.35 + 0.15 * Math.sin(t * 3);
         } else {
           o.forks.position.y = 4 + b.lift * 40;
-          o.cargo.visible = b.carrying;
+          if (b.carrying && !o.wasCarrying) o.cargo.material = MAT.prod[randProd()];
+          o.wasCarrying = b.carrying; o.cargo.visible = b.carrying;
           o.beacon.material.uniforms.tint.value.setHex(on ? 0xfb923c : 0x7c2d12);
           o.spot.position.x = b.dir * 52;
         }
@@ -3078,7 +3782,7 @@
       if (fp) P.group.visible = game.state !== 'START';
       const n = p.cargo.length;
       P.forks.position.y = 3 + (n ? 8 : 0) + (p.liftAnim / 0.35) * 14;
-      P.cargo.forEach((m, i) => { m.visible = i < n && !(fp && i > 0); if (i < n) m.material = p.cargo[i].src ? MAT.cargoPick : MAT.cargoPut; });   // in first person only the bottom pallet, so you can still see
+      P.cargo.forEach((m, i) => { m.visible = i < n && !(fp && i > 0); if (i < n) { const cg = p.cargo[i]; if (cg.prod === undefined) cg.prod = cg.src ? hashProd(cg.src.id || cg.src.c * 97 + cg.src.r) : randProd(); m.material = MAT.prod[cg.prod]; } });   // in first person only the bottom pallet, so you can still see
       P.beacon.material.uniforms.tint.value.setHex(Math.sin(t * 12) > 0 ? 0x38bdf8 : 0x1e3a8a);
       P.flame.visible = (p.boosting || p.kick > 0) && !fp;
       if (P.flame.visible) { MAT.flame.uniforms.tint.value.setHex(p.kick > 0 ? 0xc084fc : 0x38bdf8); P.flame.scale.set(18 + Math.random() * 18, 1, 14); }
@@ -3089,13 +3793,13 @@
       D.belt.forEach((m, i) => {
         const p = game.belt[i];
         m.visible = !!p;
-        if (p) { m.position.set(p.x, 22, (R_D10 + 0.5) * TILE); m.material = p.kind ? MAT.cargoWrap : MAT.cargoPut; }
+        if (p) { m.position.set(p.x, 22, (R_D10 + 0.5) * TILE); if (p.prod === undefined) p.prod = randProd(); m.material = MAT.prod[p.prod]; }
       });
     }
     function syncTrailer() {
       let i = 0;
       const o = game.mode === 'loading' && game.state !== 'START' ? game.order : null;
-      if (o) for (let r = R_TR0; r <= R_TR1; r++) { const s = o.slots[r]; if (!s) continue; for (let k = 0; k < 2; k++) if (s[k] && i < D.trailer.length) { D.trailer[i].position.set((o.door.c + k + 0.5) * TILE, 0, (r + 0.5) * TILE); D.trailer[i].visible = true; i++; } }
+      if (o) for (let r = R_TR0; r <= R_TR1; r++) { const s = o.slots[r]; if (!s) continue; for (let k = 0; k < 2; k++) if (s[k] && i < D.trailer.length) { D.trailer[i].position.set((o.door.c + k + 0.5) * TILE, 0, (r + 0.5) * TILE); D.trailer[i].visible = true; D.trailer[i].material = MAT.prod[hashProd(r * 3 + k + 11)]; i++; } }
       for (; i < D.trailer.length; i++) D.trailer[i].visible = false;
     }
     function syncSpills() {
@@ -3105,10 +3809,13 @@
         if (!g) {
           g = new THREE.Group();
           const cx = (s.c + 1) * TILE, cz = (s.r + 0.5) * TILE;
-          const puddle = new THREE.Mesh(GEO.plane, MAT.spill); puddle.scale.set(96, 1, 46); puddle.position.set(cx, 0.7, cz); g.add(puddle);
           const r2 = mulberry32(Math.floor(s.c * 31 + s.r * 7));
-          const pal = new THREE.Mesh(GEO.cargo, MAT.cargoBot); pal.position.set(cx - 6, 0, cz); pal.rotation.set(0.25, 0.6, 0.15); pal.scale.set(1.4, 0.6, 1.4); g.add(pal);
-          for (let i = 0; i < 8; i++) { const b = new THREE.Mesh(GEO.smallBox, MAT.cargoBot); b.position.set(cx - 40 + r2() * 80, r2() < 0.3 ? 4 : 0, cz - 18 + r2() * 36); b.rotation.set(r2() * 0.6, r2() * 3, r2() * 0.6); g.add(b); }
+          const kind = Math.floor(r2() * 3), P_OF = [5, 4, 0][kind];   // mayo jugs / dressing bottles / mac cases
+          const puddle = new THREE.Mesh(GEO.plane, MAT.spills[kind]); puddle.scale.set(128, 1, 70); puddle.position.set(cx, 0.7, cz); puddle.rotation.y = r2() < 0.5 ? 0 : Math.PI; g.add(puddle);
+          const pal = new THREE.Mesh(GEO.cargo, MAT.prod[P_OF]); pal.position.set(cx - 6, 0, cz); pal.rotation.set(0.25, 0.6, 0.15); pal.scale.set(1.4, 0.6, 1.4); g.add(pal);
+          for (let i = 0; i < 4; i++) { const b = new THREE.Mesh(GEO.smallBox, MAT.prod[P_OF]); b.position.set(cx - 30 + r2() * 60, r2() < 0.3 ? 4 : 0, cz - 14 + r2() * 28); b.rotation.set(r2() * 0.6, r2() * 3, r2() * 0.6); g.add(b); }
+          const loose = [GEO.jug, GEO.bottle, GEO.jar][kind];
+          for (let i = 0; i < (kind === 2 ? 0 : 9); i++) { const b = new THREE.Mesh(kind === 0 && r2() < 0.4 ? GEO.jar : loose, MAT.vc); b.position.set(cx - 42 + r2() * 84, 0.5, cz - 20 + r2() * 40); b.rotation.set(Math.PI / 2 * (r2() < 0.7 ? 1 : 0), r2() * 6, 0); g.add(b); }
           for (const [dx, dz] of [[-44, -22], [44, -22], [-44, 22], [44, 22]]) { const c = new THREE.Mesh(GEO.cone, MAT.vc); c.position.set(cx + dx, 0, cz + dz); g.add(c); }
           for (const dz of [-22, 22]) { const tp = new THREE.Mesh(GEO.tape, MAT.tape); tp.position.set(cx, 10, cz + dz); g.add(tp); }
           scene.add(g); D.spills.set(s, g);
@@ -3474,7 +4181,7 @@
       const pulse = 5 + Math.sin(t * 8) * 2;
       ctx.fillStyle = '#fff'; ctx.fillRect(rx + player.x * m - pulse / 2 - 2, ry + player.y * m - pulse / 2 - 2, pulse + 4, pulse + 4);
       ctx.fillStyle = '#2563eb'; ctx.fillRect(rx + player.x * m - pulse / 2, ry + player.y * m - pulse / 2, pulse, pulse);
-      pixelText('WAREHOUSE ECHB', viewW / 2, ry - 16, '#ffd84d', 10);
+      pixelText('WAREHOUSE MAP', viewW / 2, ry - 16, '#ffd84d', 10);
       pixelText('■ SPILL   ■ BOSS   ■ DRIVER', viewW / 2, ry + rh + 22, '#94a3b8', 7);
       ctx.restore();
     }
@@ -3502,9 +4209,11 @@
     function frame(now) {
       const dt = Math.min(0.05, Math.max(0, (now - lastTime) / 1000) || 0.016);
       lastTime = now;
-      const steps = Math.ceil(dt / PHYS - 0.01);
-      for (let i = 0; i < steps; i++) update(dt / steps);
+      const sdt = DEV.on ? dt * DEV.scale : dt;
+      const steps = Math.max(1, Math.ceil(sdt / PHYS - 0.01));
+      for (let i = 0; i < steps; i++) update(sdt / steps);
       pollGamepad();
+      devTick(dt);
       updateHUD();
       render(now, dt);
       requestAnimationFrame(frame);
@@ -3514,6 +4223,7 @@
     function clearKeys() { for (const k in keys) keys[k] = false; game.showMap = false; document.querySelectorAll('.active').forEach(el => el.classList.remove('active')); }
 
     window.addEventListener('keydown', (e) => {
+      if (devKey(e)) { e.preventDefault(); return; }
       if (game.state === 'GARAGE') { if (e.code === 'Escape' || e.code === 'KeyG') { e.preventDefault(); closeGarage(); } return; }
       if (e.code === 'Enter' || (e.code === 'Space' && game.state !== 'PLAYING')) {
         if (game.state === 'START') { e.preventDefault(); startNewGame(); return; }
@@ -3549,6 +4259,9 @@
     function toggleSound() { audio.init(); btnSound.textContent = audio.toggle() ? 'SFX:ON' : 'SFX:OFF'; }
     document.querySelectorAll('.mode-card').forEach(c => c.addEventListener('click', () => { game.mode = c.dataset.mode; save.mode = game.mode; persist(); refreshWallets(); }));
     btnStart.addEventListener('click', () => startNewGame());
+    $('btn-dev').addEventListener('click', (e) => { e.currentTarget.blur(); devStart(); });
+    $('dev-panel').addEventListener('click', devClick);
+    $('dev-panel').addEventListener('pointerdown', e => e.stopPropagation());
     btnRestart.addEventListener('click', () => { if (performance.now() - game.gameOverAt > 600) startNewGame(); });
     btnResume.addEventListener('click', togglePause);
     $('btn-se-continue').addEventListener('click', continueShift);
