@@ -220,7 +220,7 @@
       <canvas id="glCanvas"></canvas>
       <canvas id="gameCanvas"></canvas>
       <div id="dev-panel" style="display:none"></div>
-      <div id="dev-tag" style="display:none">DEV MODE &bull; ` PANEL &bull; 1-6 HOTKEYS</div>
+      <div id="dev-tag" style="display:none">DEV MODE &bull; ` PANEL &bull; 1-8 HOTKEYS</div>
       <div id="crt-overlay"></div>
 
       <div id="touch-controls">
@@ -1015,6 +1015,12 @@
         g.fillStyle = 'rgba(210, 160, 40, 0.95)'; g.beginPath(); g.ellipse(22, 19, 13, 6, 0.3, 0, Math.PI * 2); g.fill(); g.beginPath(); g.ellipse(44, 11, 11, 5, -0.4, 0, Math.PI * 2); g.fill();
         g.fillStyle = 'rgba(255,240,200,0.9)'; g.fillRect(20, 16, 3, 1); g.fillRect(42, 9, 3, 1);
       });
+      TEX.stain = canvasTex(32, 32, g => {
+        const r = mulberry32(9);
+        g.fillStyle = 'rgba(127,29,29,0.95)'; g.beginPath(); g.ellipse(16, 16, 8, 6, 0.4, 0, Math.PI * 2); g.fill();
+        for (let i = 0; i < 12; i++) { const a = r() * 6.28, d = 6 + r() * 9; g.fillStyle = r() < 0.5 ? 'rgba(153,27,27,0.95)' : 'rgba(185,28,28,0.9)'; g.beginPath(); g.ellipse(16 + Math.cos(a) * d, 16 + Math.sin(a) * d, 1 + r() * 2.5, 1 + r() * 2, a, 0, Math.PI * 2); g.fill(); }
+        g.fillStyle = 'rgba(69,10,10,0.95)'; g.fillRect(14, 14, 4, 3); g.fillStyle = 'rgba(156,163,175,0.9)'; g.fillRect(19, 15, 3, 2);
+      });
       TEX.beam = canvasTex(8, 64, g => { const gr = g.createLinearGradient(0, 64, 0, 0); gr.addColorStop(0, 'rgba(255,255,255,0.95)'); gr.addColorStop(0.35, 'rgba(255,255,255,0.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 8, 64); g.fillStyle = 'rgba(255,255,255,0.5)'; g.fillRect(3, 0, 2, 64); });
       TEX.prod = PRODUCTS.map((p, i) => canvasTex(128, 64, g => paintProduct(p.id, g, mulberry32(101 + i))));
       TEX.spills = SPILL_KINDS.map((k, i) => canvasTex(96, 48, (g, w, h) => paintSpill(k, g, mulberry32(303 + i), w, h)));
@@ -1196,6 +1202,13 @@
         forks: pu(g => { g.box(3, 0, -4, 24, 2, 3, 0xcbd5e1); g.box(3, 0, 4, 24, 2, 3, 0xcbd5e1); g.box(-10, 0, 0, 2, 12, 12, 0x374151); g.box(-10, 12, 0, 2, 2, 12, 0xfacc15); })
       };
       GEO.vplane = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0);
+      GEO.mouse = pu(g => {
+        g.box(0, 0.6, 0, 7, 4, 4.4, 0x8b8b8b); g.box(4.6, 1.2, 0, 3.2, 3, 3, 0x9ca3af); g.box(6.5, 1.8, 0, 1, 1, 1, 0xf472b6);
+        g.box(4.2, 4, -1.5, 1, 1.8, 1.8, 0xf9a8d4); g.box(4.2, 4, 1.5, 1, 1.8, 1.8, 0xf9a8d4);
+        g.box(5.8, 2.8, -1.1, 0.6, 0.6, 0.6, 0x000000); g.box(5.8, 2.8, 1.1, 0.6, 0.6, 0.6, 0x000000);
+        g.box(-6.5, 1.2, 0, 6.5, 0.6, 0.6, 0xf9a8d4);
+        for (const [x, z] of [[2, -2], [2, 2], [-2, -2], [-2, 2]]) g.box(x, 0, z, 1, 0.8, 1, 0xf9a8d4);
+      });
       // the guy in D05: bald, flat-brim cap, hoodie, jeans, joint (faces +x)
       GEO.stoner = pu(g => {
         const SK = 0xe0ac69, HD = 0x4d7c0f, JN = 0x1e3a8a, CAP = 0x111827;
@@ -1237,6 +1250,7 @@
       MAT.cargoPut = MAT.prod[0]; MAT.cargoPick = MAT.prod[2]; MAT.cargoBot = MAT.prod[3]; MAT.cargoWrap = MAT.prod[1];
       MAT.spills = TEX.spills.map(t => ps1Mat({ map: t, transparent: true, alphaTest: 0.3, snap: 0, affine: 0 }));
       MAT.rack = ps1Mat({ map: TEX.rack });
+      MAT.stain = ps1Mat({ map: TEX.stain, transparent: true, alphaTest: 0.3, snap: 0, affine: 0 });
       MAT.prodGold = TEX.prod.map(t => ps1Mat({ map: t, color: 0xffd34d, emissive: 0.45 }));
       MAT.puBeam = {}; MAT.puGlow = {};
       for (const [k, P] of Object.entries(POWERUPS)) {
@@ -1907,7 +1921,7 @@
       game.timer = shiftClock(game.shift);
       game.pending = 0; game.fines = 0; game.combo = 1;
       game.countdown = 1.6; game.lowTickSec = -1; game.rateMetShown = false;
-      game.pickups = []; game.puT = rand(8, 14); clearBuffs();
+      game.pickups = []; game.puT = rand(8, 14); clearBuffs(); game.mouse = null;
       player.integrity = S.maxHP;                     // the shop patches you up between shifts
       if (!supervisor()) game.supT = Math.max(game.supT, supAway() * 0.75);   // a quiet start to every shift
       showBanner(`SHIFT ${pad(game.shift, 2)}`, `RATE: ${game.rate} PALLETS IN ${Math.round(game.timer)}s`, '#ffd84d', 2.2);
@@ -2051,7 +2065,7 @@
     function devStart() {
       DEV.armed = 0;
       audio.init();
-      DEV.snap = JSON.stringify(save); DEV.tuneSnap = JSON.stringify(PU_TUNE);
+      DEV.snap = JSON.stringify(save); DEV.tuneSnap = JSON.stringify(PU_TUNE); DEV.mouseSnap = JSON.stringify(MOUSE_TUNE);
       DEV.starting = true; startNewGame(); DEV.starting = false;
       DEV.on = true; DEV.queue = []; DEV.panel = true;
       S = stats(); player.integrity = S.maxHP;
@@ -2067,6 +2081,7 @@
       Object.assign(save, o);
       DEV.on = false; DEV.queue = []; DEV.scale = 1;
       if (DEV.tuneSnap) Object.assign(PU_TUNE, JSON.parse(DEV.tuneSnap));
+      if (DEV.mouseSnap) Object.assign(MOUSE_TUNE, JSON.parse(DEV.mouseSnap));
       S = stats();
       $('dev-panel').style.display = 'none'; $('dev-tag').style.display = 'none';
     }
@@ -2206,6 +2221,7 @@
     // ---- queue ----
     const DEV_ACTIONS = {
       spill: ['SPILL', devSpill], clearspills: ['CLEAN SPILLS', devClearSpills], slick: ['DRESSING SLICK', devSlick],
+      mouse: ['MOUSE!', () => { if (game.mouse) game.mouse = null; if (!tryMouse(true)) devSay('NO CLEAR AISLE AHEAD FOR A MOUSE', '#94a3b8'); }], clearstains: ['CLEAN STAINS', () => { game.stains = []; devSay('STAINS MOPPED'); }],
       burnout: ['BURNOUT', () => devAntic('burnout')], donut: ['DONUTS', () => devAntic('donut')], ram: ['RACK RAM', () => devAntic('ram')],
       burnout3: ['BURNOUT x3', () => devAntic('burnout', 3)], ram3: ['RACK RAM x3', () => devAntic('ram', 3)], chaos: ['MASS CHAOS', devChaos],
       tbone: ['T-BONE ME', () => devImpact('side')], headon: ['HEAD-ON', () => devImpact('front')], rearend: ['REAR-END ME', () => devImpact('rear')], hit: ['TAKE A HIT', devTakeHit],
@@ -2259,7 +2275,8 @@
         <div class="dev-h">QUEUE DELAY</div><div class="dev-g four">${[0, 2, 5, 10].map(d => `<button class="dev-b ${DEV.delay === d ? 'on' : ''}" data-delay="${d}">${d ? d + 's' : 'NOW'}</button>`).join('')}</div>
         <div class="dev-h">TIME</div><div class="dev-g four">${[0.25, 0.5, 1, 2].map(d => `<button class="dev-b ${DEV.scale === d ? 'on' : ''}" data-scale="${d}">${d}x</button>`).join('')}</div>
         <div class="dev-h">QUEUED${DEV.armed ? ` • ${DEV.armed} T-BONE ARMED` : ''}</div><div id="dev-q">${DEV.queue.length ? DEV.queue.map((q, i) => `<div class="dev-qi"><span>${q.label}</span><b data-qt="${i}">${Math.max(0, q.at - game.simT).toFixed(1)}s</b><button class="dev-x" data-qx="${i}">x</button></div>`).join('') : '<div class="dev-dim">NOTHING QUEUED. PICK A DELAY, THEN STACK ACTIONS.</div>'}</div>
-        ${grp('HAZARDS [1]', pickA(['spill', 'clearspills', 'slick']), 'act')}
+        ${grp('HAZARDS [1] • MOUSE [8]', pickA(['spill', 'clearspills', 'slick', 'mouse', 'clearstains']), 'act')}
+        ${[['freq', 'MOUSE FREQUENCY', 0, 10, 0.5, 'x'], ['reward', 'MOUSE REWARD', 0, 2000, 50, '$']].map(([k, n, a, b, st, u]) => `<label class="dev-sl"><span>${n} <b id="mv-${k}">${devFmt(MOUSE_TUNE[k], u)}</b></span><input type="range" data-mtune="${k}" data-u="${u}" min="${a}" max="${b}" step="${st}" value="${MOUSE_TUNE[k]}"></label>`).join('')}
         ${grp('DRIVER ANTICS [2 3 4]', pickA(['burnout', 'donut', 'ram', 'burnout3', 'ram3', 'chaos']), 'act')}
         ${grp('IMPACTS [5]', pickA(['tbone', 'headon', 'rearend', 'hit']), 'act')}
         ${grp('EVENTS [6]', pickA(['rush', 'flicker', 'spills', 'audit', 'derby', 'endev']), 'act')}
@@ -2291,8 +2308,10 @@
       else if (d.qx !== undefined) DEV.queue.splice(+d.qx, 1);
       if (DEV.on) devRender();
     }
-    const devFmt = (v, u) => u === '%' ? Math.round(v * 100) + '%' : (+v).toFixed(u === 'x' ? 2 : 0) + u;
+    const devFmt = (v, u) => u === '$' ? '$' + Math.round(v) : u === '%' ? Math.round(v * 100) + '%' : (+v).toFixed(u === 'x' ? 2 : 0) + u;
     function devInput(e) {
+      const mk = e.target.dataset.mtune;
+      if (mk) { MOUSE_TUNE[mk] = +e.target.value; const l = $('mv-' + mk); if (l) l.textContent = devFmt(MOUSE_TUNE[mk], e.target.dataset.u); return; }
       const k = e.target.dataset.tune; if (!k) return;
       PU_TUNE[k] = +e.target.value;
       const lab = $('pv-' + k); if (lab) lab.textContent = devFmt(PU_TUNE[k], e.target.dataset.u);
@@ -2319,6 +2338,7 @@
       const map = { Digit1: 'spill', Digit2: 'burnout', Digit3: 'donut', Digit4: 'ram', Digit5: 'tbone' };
       if (e.code === 'Backquote') { DEV.panel = !DEV.panel; if (DEV.panel) devRender(); return true; }
       if (map[e.code] && !e.repeat) { devQueue(map[e.code]); return true; }
+      if (e.code === 'Digit8' && !e.repeat) { devQueue('mouse'); return true; }
       if (e.code === 'Digit7' && !e.repeat) { spawnPickup(null, true); return true; }
       if (e.code === 'Digit6' && !e.repeat) { devQueue(pick(['rush', 'flicker', 'spills', 'audit', 'derby'])); return true; }
       return false;
@@ -2695,6 +2715,87 @@
     }
 
     // =========================================================================
+    // 9j. THE MOUSE — rare dash across the aisle in front of you: stop = +$500, don't = splat
+    // =========================================================================
+    var MOUSE_TUNE = { freq: 1, reward: 500 };     // dev sliders edit these
+    function mouseSqueak() { for (let k = 0; k < 3; k++) audio.tone(2300 + Math.random() * 500, 0.05, 'square', 0.05, 1800, k * 0.07); }
+    function mouseSplat() {
+      audio.noise(0.5, 180, 0.42); audio.noise(0.3, 1100, 0.2, 0.03); audio.tone(70, 0.4, 'sawtooth', 0.22, 30);
+      audio.tone(2600, 0.06, 'square', 0.06, 900, 0.0);                   // one last squeak
+      audio.splat();
+    }
+    // start a crossing ahead of the truck; force (dev) skips the speed / heading checks
+    function tryMouse(force) {
+      const p = player, v = Math.max(0, p.speed);
+      if (!force && v < 85) return false;
+      const f = { x: Math.cos(p.angle), y: Math.sin(p.angle) };
+      if (!force && Math.abs(f.x) < 0.85 && Math.abs(f.y) < 0.85) return false;       // only on a straight run
+      const ax = Math.abs(f.x) >= Math.abs(f.y) ? { x: Math.sign(f.x), y: 0 } : { x: 0, y: Math.sign(f.y) };
+      // far enough to stop if you react fast: ~0.5 s of reaction + your braking distance + a body length
+      const d = clamp(v * 0.5 + (v * v) / (2 * S.brake) + 44, 95, 300);
+      const cx = p.x + f.x * d, cy = p.y + f.y * d;
+      for (let k = 1; k <= 8; k++) { const q = cellOf(p.x + f.x * d * k / 8, p.y + f.y * d * k / 8); if (!walkable(q.c, q.r)) return false; }
+      const r = { x: -ax.y, y: ax.x };                                                  // across the aisle
+      const extent = s => { let e = 0; while (e < 220) { const q = cellOf(cx + r.x * s * (e + 6), cy + r.y * s * (e + 6)); if (!walkable(q.c, q.r)) break; e += 6; } return e; };
+      const e1 = extent(-1), e2 = extent(1);
+      if (e1 + e2 < 50) return false;
+      const dir = Math.random() < 0.5 ? 1 : -1;
+      const sx = cx - r.x * dir * (dir > 0 ? e1 : e2), sy = cy - r.y * dir * (dir > 0 ? e1 : e2);
+      // it peeks out from under the rack, then times its dash to hit the middle of your path just as your forks get there
+      const speed = rand(115, 145), toMid = dir > 0 ? e1 : e2;
+      const arrive = Math.max(0.35, (d - 32) / Math.max(60, v)) + rand(-0.05, 0.12);
+      game.mouse = { x: sx, y: sy, vx: r.x * dir, vy: r.y * dir, len: e1 + e2, done: 0, t: 0, wait: Math.max(0.15, arrive - toMid / speed), freeze: Math.random() < 0.35 ? rand(0.2, 0.45) : 0, freezeAt: rand(0.45, 0.6), stopped: false, speed };
+      mouseSqueak();
+      addText(sx, sy - 10, 'SQUEAK!', '#f9a8d4');
+      return true;
+    }
+    function updateMouse(dt) {
+      if (game.state !== 'PLAYING' || game.countdown > 0) return;
+      const m = game.mouse;
+      if (!m) {
+        if (MOUSE_TUNE.freq <= 0) return;
+        game.mouseT = (game.mouseT === undefined ? rand(90, 200) : game.mouseT) - dt * MOUSE_TUNE.freq;
+        if (game.mouseT <= 0) game.mouseT = tryMouse(false) ? rand(150, 300) : 2.5;
+        return;
+      }
+      m.t += dt;
+      // scurry (with the odd terrified freeze halfway across)
+      let step = m.speed * dt;
+      if (m.wait > 0) { m.wait -= dt; step = 0; }
+      if (m.freeze > 0 && m.done / m.len > m.freezeAt) { m.freeze -= dt; step = 0; }
+      m.x += m.vx * step; m.y += m.vy * step; m.done += step;
+      // did you stop for it? (it has to be in front of you, not behind)
+      const fx = Math.cos(player.angle), fy = Math.sin(player.angle);
+      const ahead = (m.x - player.x) * fx + (m.y - player.y) * fy;
+      if (Math.abs(player.speed) < 12 && ahead > 0 && ahead < 320) m.stopped = true;
+      // squish test: truck body or forks
+      const tip = forkTip(player);
+      const hit = circOf(player, P_BODY).some(c => Math.hypot(c.x - m.x, c.y - m.y) < c.r + 3) || Math.hypot(tip.x - m.x, tip.y - m.y) < 9 || Math.hypot(player.x + fx * 32 - m.x, player.y + fy * 32 - m.y) < 8;
+      if (hit && Math.abs(player.speed) > 4) {
+        game.mouse = null;
+        mouseSplat();
+        game.stains.push({ x: m.x, y: m.y, rot: Math.random() * 6.28, s: rand(0.9, 1.25) });
+        if (game.stains.length > 40) game.stains.shift();
+        spawnParticles(m.x, m.y, '#b91c1c', 26, 170, 0.6); spawnParticles(m.x, m.y, '#7f1d1d', 12, 90, 0.8);
+        game.shake = Math.max(game.shake, 5); game.flashColor = '#b91c1c'; game.flash = 0.2;
+        addText(player.x, player.y - 40, 'SPLAT!', '#ef4444', true);
+        addText(player.x, player.y - 40, pick(['POOR LITTLE GUY', 'RIP', 'HE HAD A FAMILY', 'NOOOO']), '#fca5a5');
+        return;
+      }
+      if (m.done >= m.len) {
+        game.mouse = null;
+        if (m.stopped) {
+          game.pending += MOUSE_TUNE.reward;
+          audio.cash && audio.cash();
+          showBanner(`YOU SPARED THE MOUSE  +${money(MOUSE_TUNE.reward)}`, 'PAID AT CLOCK-OUT', '#f9a8d4', 2.4);
+          spawnParticles(m.x, m.y, '#f9a8d4', 16, 110, 0.6);
+          bumpHud(elPay);
+        } else addText(m.x, m.y - 10, 'IT GOT AWAY', '#94a3b8');
+      }
+      if (m.t > 8) game.mouse = null;
+    }
+
+    // =========================================================================
     // 10. SHIFT FLOW — PUTAWAY (DCVR) & TRAILER LOADING
     // =========================================================================
     function keepouts() {
@@ -2739,7 +2840,7 @@
       Object.assign(game, {
         time: 0, pending: 0, earned: 0, fines: 0, shift: 1, deliveries: 0, combo: 1, peakCombo: 1, timer: 75, countdown: 1.6,
         shake: 0, flash: 0, banner: null, lowTickSec: -1, hornCd: 0, beepCd: 0, backupCd: 0, writeCd: 0,
-        particles: [], texts: [], belt: [], beltSpawn: 0, spills: [], pickups: [], puT: rand(8, 14), spillT: rand(20, 35), order: null, sup: null, supT: rand(45, 65), events: [], eventT: rand(40, 70), runEarned: 0, shiftDelivered: 0, rate: 0
+        particles: [], texts: [], belt: [], beltSpawn: 0, spills: [], pickups: [], puT: rand(8, 14), mouse: null, mouseT: rand(90, 200), stains: [], spillT: rand(20, 35), order: null, sup: null, supT: rand(45, 65), events: [], eventT: rand(40, 70), runEarned: 0, shiftDelivered: 0, rate: 0
       });
       game.guide.key = '';
       Object.assign(player, {
@@ -3581,6 +3682,7 @@
       updateHeat(dt);
       updatePowerups(dt);
       updateStoner(dt);
+      updateMouse(dt);
       rebuildFlow(dt);
       updateSupervisor(dt);
       updateSpills(dt);
@@ -4073,6 +4175,23 @@
       }
       for (const [q, g] of D.pu) if (!g.seen) { scene.remove(g.group); D.pu.delete(q); }
     }
+    function syncMouse(t) {
+      if (!D.mouse) { D.mouse = new THREE.Mesh(GEO.mouse, MAT.vc); D.mouse.scale.set(1.4, 1.4, 1.4); scene.add(D.mouse); D.stains = new Map(); }
+      const m = game.mouse;
+      D.mouse.visible = !!m && game.state !== 'START';
+      if (m) {
+        const moving = m.wait <= 0 && !(m.freeze > 0 && m.done / m.len > m.freezeAt);
+        D.mouse.position.set(m.x, moving ? Math.abs(Math.sin(t * 30)) * 1.2 : 0, m.y);
+        D.mouse.rotation.y = -Math.atan2(m.vy, m.vx) + (moving ? Math.sin(t * 40) * 0.25 : Math.sin(t * 70) * 0.06);
+      }
+      for (const g of D.stains.values()) g.seen = false;
+      for (const st of game.stains || []) {
+        let g = D.stains.get(st);
+        if (!g) { g = new THREE.Mesh(GEO.plane, MAT.stain); g.position.set(st.x, 0.55, st.y); g.rotation.y = st.rot; g.scale.set(30 * st.s, 1, 30 * st.s); scene.add(g); D.stains.set(st, g); }
+        g.seen = true;
+      }
+      for (const [st, g] of D.stains) if (!g.seen) { scene.remove(g); D.stains.delete(st); }
+    }
     function syncStoner(t) {
       if (!STONER) return;
       if (!D.stoner) { D.stoner = new THREE.Mesh(GEO.stoner, MAT.vc); scene.add(D.stoner); }
@@ -4174,7 +4293,7 @@
       if (!game.cam.init) { camState.init = false; game.cam.init = true; }
       updateCamera(dt, t);
       if (game.state !== 'START' && game.state !== 'GAMEOVER') guidePath();
-      syncPlayer(t); syncBots(t); syncBelt(); syncTrailer(); syncSpills(); syncOil(); syncPickups(t); syncStoner(t);
+      syncPlayer(t); syncBots(t); syncBelt(); syncTrailer(); syncSpills(); syncOil(); syncPickups(t); syncStoner(t); syncMouse(t);
       const hl = highlightList();
       syncHighlights(t, hl);
       syncGuide(t);
