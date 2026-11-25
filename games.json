@@ -1,14 +1,20 @@
 {
   "games": [
     {
-      "title": "Example Game One",
-      "file": "games/example-game-one.html",
-      "description": "A short description of the game."
+      "title": "Forklift Rush 3D",
+      "file": "games/ForkliftRush.html",
+      "description": "Warehouse Simulator"
     },
     {
-      "title": "Example Game Two",
-      "file": "games/example-game-two.html",
-      "description": "Another game. Replace these with your real ones."
-    }
+      "title": "Stack Alchemist",
+      "file": "games/StackAlchemist.html",
+      "description": "A game about coding"
+    },
+    {
+      "title": "EaglerCraft",
+      "file": "games/minecraft.html",
+      "description": "Totally not Minecraft"
+    }    
+    
   ]
 }
