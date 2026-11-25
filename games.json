@@ -19,6 +19,11 @@
       "title": "Forklift Rush 16-bit",
       "file": "games/ForkliftRush2D.html",
       "description": "2D Warehouse Simulator"
-    }    
+    },
+    {
+      "title": "LZDoom",
+      "file": "games/lzdoom.html",
+      "description": "LZ Doom port for WebGL"
+    }
   ]
 }
