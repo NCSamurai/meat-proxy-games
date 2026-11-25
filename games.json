@@ -28,7 +28,12 @@
     {
       "title": "Pixel Abyss",
       "file": "games/PixelAbyssv6.html",
-      "description": "idk some vibe coded game i downloaded"
+      "description": "Vampire Survivors clone"
+    },
+    {
+      "title": "Neon Vortex",
+      "file": "games/neon-vortex.html",
+      "description": "Vibe coded knockoff of Geometry Wars"
     }
   ]
 }
