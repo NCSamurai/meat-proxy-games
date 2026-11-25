@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meat Proxy Games</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --red: #d10000;
+      --red-bright: #ff1a1a;
+      --red-dark: #5a0000;
+      --black: #0a0a0a;
+      --panel: #141010;
+      --text: #e8dcdc;
+      --muted: #8a6a6a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--black);
+      color: var(--text);
+      font-family: 'Courier Prime', 'Courier New', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 60px 20px 40px;
+      background-image:
+        repeating-linear-gradient(0deg, rgba(255,0,0,0.025) 0 1px, transparent 1px 3px),
+        radial-gradient(ellipse at top, rgba(209,0,0,0.18), transparent 60%);
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+
+    h1 {
+      font-family: 'Special Elite', 'Courier New', monospace;
+      font-weight: normal;
+      font-size: clamp(2.4rem, 8vw, 5rem);
+      color: var(--red);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-shadow: 3px 3px 0 var(--red-dark), 0 0 24px rgba(255,0,0,0.35);
+      white-space: nowrap;
+      overflow: hidden;
+      border-right: 0.12em solid var(--red-bright);
+      width: 0;
+      animation: typing 1.6s steps(16, end) forwards, blink 0.8s step-end infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes typing { to { width: 16ch; } }
+    @keyframes blink { 50% { border-color: transparent; } }
+
+    .tagline {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+    }
+
+    .divider {
+      width: min(640px, 100%);
+      border: none;
+      border-top: 2px dashed var(--red-dark);
+      margin: 0 auto 40px;
+    }
+
+    main {
+      width: min(820px, 100%);
+    }
+
+    .games {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 18px;
+    }
+
+    .game a {
+      display: block;
+      height: 100%;
+      padding: 22px 20px;
+      background: var(--panel);
+      border: 2px solid var(--red-dark);
+      color: var(--text);
+      text-decoration: none;
+      transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+      position: relative;
+    }
+
+    .game a:hover,
+    .game a:focus-visible {
+      border-color: var(--red-bright);
+      transform: translate(-3px, -3px);
+      box-shadow: 6px 6px 0 var(--red);
+      outline: none;
+    }
+
+    .game .num {
+      font-family: 'Special Elite', monospace;
+      color: var(--red);
+      font-size: 0.85rem;
+      letter-spacing: 0.1em;
+    }
+
+    .game h2 {
+      font-family: 'Special Elite', monospace;
+      font-weight: normal;
+      font-size: 1.4rem;
+      margin: 8px 0 10px;
+      color: #fff;
+    }
+
+    .game p {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .game .play {
+      display: inline-block;
+      margin-top: 14px;
+      color: var(--red-bright);
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      font-size: 0.8rem;
+    }
+
+    .status {
+      text-align: center;
+      color: var(--muted);
+      padding: 30px 0;
+    }
+
+    .status.error { color: var(--red-bright); }
+
+    footer {
+      margin-top: auto;
+      padding-top: 60px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      h1 { animation: none; width: auto; border-right: none; }
+      .game a { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Meat Proxy</h1>
+    <p class="tagline">// vibe coded games, self hosted //</p>
+  </header>
+
+  <hr class="divider">
+
+  <main>
+    <ul class="games" id="games"></ul>
+    <p class="status" id="status">Loading games...</p>
+  </main>
+
+  <footer>Meat Proxy Games &middot; <span id="year"></span></footer>
+
+  <script>
+    // Edit games.json to add or remove games. No changes needed here.
+    const CONFIG_FILE = 'games.json';
+
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    const list = document.getElementById('games');
+    const status = document.getElementById('status');
+
+    fetch(CONFIG_FILE, { cache: 'no-store' })
+      .then(res => {
+        if (!res.ok) throw new Error('Could not load ' + CONFIG_FILE);
+        return res.json();
+      })
+      .then(data => {
+        const games = data.games || [];
+        if (!games.length) {
+          status.textContent = 'No games yet. Add some to ' + CONFIG_FILE + '.';
+          return;
+        }
+        status.remove();
+        games.forEach((game, i) => {
+          const li = document.createElement('li');
+          li.className = 'game';
+
+          const a = document.createElement('a');
+          a.href = game.file;
+
+          const num = document.createElement('span');
+          num.className = 'num';
+          num.textContent = 'NO. ' + String(i + 1).padStart(3, '0');
+
+          const h2 = document.createElement('h2');
+          h2.textContent = game.title || game.file;
+
+          a.append(num, h2);
+
+          if (game.description) {
+            const p = document.createElement('p');
+            p.textContent = game.description;
+            a.append(p);
+          }
+
+          const play = document.createElement('span');
+          play.className = 'play';
+          play.textContent = '> PLAY_';
+          a.append(play);
+
+          li.append(a);
+          list.append(li);
+        });
+      })
+      .catch(err => {
+        status.textContent = err.message + '. (Opening index.html directly from disk blocks this. View it on GitHub Pages or a local server.)';
+        status.classList.add('error');
+      });
+  </script>
+</body>
+</html>

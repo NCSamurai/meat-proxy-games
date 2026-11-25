@@ -1,0 +1,14 @@
+{
+  "games": [
+    {
+      "title": "Example Game One",
+      "file": "games/example-game-one.html",
+      "description": "A short description of the game."
+    },
+    {
+      "title": "Example Game Two",
+      "file": "games/example-game-two.html",
+      "description": "Another game. Replace these with your real ones."
+    }
+  ]
+}
