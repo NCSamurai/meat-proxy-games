@@ -42,21 +42,25 @@
     h1 {
       font-family: 'Special Elite', 'Courier New', monospace;
       font-weight: normal;
-      font-size: clamp(2.4rem, 8vw, 5rem);
+      font-size: clamp(1.6rem, 6vw, 4rem);
       color: var(--red);
       letter-spacing: 0.06em;
       text-transform: uppercase;
       text-shadow: 3px 3px 0 var(--red-dark), 0 0 24px rgba(255,0,0,0.35);
-      white-space: nowrap;
-      overflow: hidden;
-      border-right: 0.12em solid var(--red-bright);
-      width: 0;
-      animation: typing 1.6s steps(16, end) forwards, blink 0.8s step-end infinite;
-      margin: 0 auto;
+      min-height: 1.2em;
     }
 
-    @keyframes typing { to { width: 16ch; } }
-    @keyframes blink { 50% { border-color: transparent; } }
+    h1 .cursor {
+      display: inline-block;
+      width: 0.08em;
+      height: 0.9em;
+      margin-left: 0.08em;
+      vertical-align: -0.05em;
+      background: var(--red-bright);
+      animation: blink 0.8s step-end infinite;
+    }
+
+    @keyframes blink { 50% { opacity: 0; } }
 
     .tagline {
       margin-top: 16px;
@@ -152,14 +156,14 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      h1 { animation: none; width: auto; border-right: none; }
+      h1 .cursor { animation: none; }
       .game a { transition: none; }
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>Meat Proxy</h1>
+    <h1 id="title" aria-label="Meat Proxy Games"><span id="title-text"></span><span class="cursor" aria-hidden="true"></span></h1>
     <p class="tagline">// vibe coded games, self hosted //</p>
   </header>
 
@@ -177,6 +181,20 @@
     const CONFIG_FILE = 'games.json';
 
     document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Typewriter title
+    const TITLE = 'Meat Proxy Games';
+    const titleEl = document.getElementById('title-text');
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      titleEl.textContent = TITLE;
+    } else {
+      let i = 0;
+      const typeNext = () => {
+        titleEl.textContent = TITLE.slice(0, ++i);
+        if (i < TITLE.length) setTimeout(typeNext, 90 + Math.random() * 60);
+      };
+      setTimeout(typeNext, 300);
+    }
 
     const list = document.getElementById('games');
     const status = document.getElementById('status');
