@@ -3,7 +3,7 @@
     {
       "title": "Forklift Rush 3D",
       "file": "games/ForkliftRush.html",
-      "description": "Warehouse Simulator"
+      "description": "3D Warehouse Simulator"
     },
     {
       "title": "Stack Alchemist",
@@ -14,7 +14,11 @@
       "title": "EaglerCraft",
       "file": "games/minecraft.html",
       "description": "Totally not Minecraft"
+    },    
+    {
+      "title": "Forklift Rush 16-bit",
+      "file": "games/ForkliftRush2D.html",
+      "description": "2D Warehouse Simulator"
     }    
-    
   ]
 }
