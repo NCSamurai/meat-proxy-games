@@ -29,6 +29,11 @@
       "title": "Pixel Abyss",
       "file": "games/PixelAbyssv6.html",
       "description": "Vampire Survivors clone"
+    },
+    {
+      "title": "Neon Vortex",
+      "file": "games/neon-vortex.html",
+      "description": "Vibecoded Geometry Wars"
     }
   ]
 }
