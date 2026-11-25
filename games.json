@@ -24,6 +24,11 @@
       "title": "LZDoom",
       "file": "games/lzdoom.html",
       "description": "LZ Doom port for WebGL"
+    },
+    {
+      "title": "Pixel Abyss",
+      "file": "games/PixelAbyssv6.html",
+      "description": "idk some vibe coded game i downloaded"
     }
   ]
 }
