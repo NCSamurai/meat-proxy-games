@@ -34,6 +34,11 @@
       "title": "Neon Vortex",
       "file": "games/neon-vortex.html",
       "description": "Vibecoded Geometry Wars"
+    },
+    {
+      "title": "Ashgrove",
+      "file": "games/Ashgrove.html",
+      "description": "First person servival-horror game, based on Resident Evil"
     }
   ]
 }
